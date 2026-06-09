@@ -20,7 +20,10 @@ import InviteVotePage from "./components/InviteVotePage";
 import BillingPage from "./components/BillingPage";
 import { LoginPage, RegisterPage } from "./components/AuthPages";
 import { clearAuthSession, getStoredOrganization } from "./services/api";
+import contractsConfig from "./config/contracts.json";
 import "./App.css";
+
+const IS_DEMO_MODE = process.env.REACT_APP_LOCAL_MODE === "true" || contractsConfig?.LOCALMode === true;
 
 function NavBar({ organization, onLogout, theme, onToggleTheme }) {
   const loc = useLocation();
@@ -47,6 +50,7 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
         </div>
       </Link>
       <div className="navbar-links">
+        {organization && IS_DEMO_MODE && <span className="nav-badge">Demo mode</span>}
         {links.map(({ to, label, icon }) => (
           <Link key={to} to={to} className={`nav-link ${loc.pathname === to ? "active" : ""}`}>
             {icon} {label}
