@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { ArrowLeft, BarChart3, Mail, Play, RefreshCw, ShieldCheck, Square, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  BarChart3,
+  Copy,
+  ExternalLink,
+  Mail,
+  Play,
+  RefreshCw,
+  ShieldCheck,
+  Square,
+  Upload,
+} from "lucide-react";
 import { deployElection, endVoting, getElection, sendInvitations, startVoting } from "../services/api";
 import { participation, StatusBadge } from "./OrganizationDashboard";
 
@@ -11,6 +22,7 @@ export default function ElectionDetail() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [invitationLinks, setInvitationLinks] = useState([]);
+  const [invitationSummary, setInvitationSummary] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -151,6 +163,11 @@ export default function ElectionDetail() {
               runAction(async () => {
                 const data = await sendInvitations(election._id);
                 setInvitationLinks(data.invitationLinks || []);
+                setInvitationSummary({
+                  count: data.count || 0,
+                  emailsSent: data.emailsSent || 0,
+                  note: data.note,
+                });
               }, "Invitation links generated")
             }
           >
@@ -159,13 +176,39 @@ export default function ElectionDetail() {
         </div>
         {invitationLinks.length > 0 && (
           <div className="invitation-list">
-            <div className="credential-label">Invitation links for testing</div>
-            <textarea
-              className="form-input credential-textarea"
-              rows={Math.min(8, invitationLinks.length + 1)}
-              readOnly
-              value={invitationLinks.map((invite) => `${invite.email},${invite.url}`).join("\n")}
-            />
+            <div className="alert alert-info">
+              {invitationSummary?.emailsSent
+                ? `${invitationSummary.emailsSent} emails sent.`
+                : "Email is not configured, so use these test links manually."}
+            </div>
+            <div className="header-actions" style={{ justifyContent: "flex-start", marginBottom: "0.75rem" }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => copyText(invitationLinks.map((invite) => `${invite.email},${invite.url}`).join("\n"))}
+              >
+                <Copy size={14} /> Copy all links
+              </button>
+              <a className="btn btn-primary" href={invitationLinks[0].url} target="_blank" rel="noreferrer">
+                <ExternalLink size={14} /> Open first invite
+              </a>
+            </div>
+            <div className="status-stack">
+              {invitationLinks.slice(0, 10).map((invite) => (
+                <div className="status-row" key={invite.email}>
+                  <span>{invite.email}</span>
+                  <button type="button" className="btn btn-secondary" onClick={() => copyText(invite.url)}>
+                    <Copy size={14} /> Copy
+                  </button>
+                </div>
+              ))}
+              {invitationLinks.length > 10 && (
+                <div className="status-row">
+                  <span>More links</span>
+                  <strong>{invitationLinks.length - 10} hidden. Use Copy all links.</strong>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </section>
@@ -191,4 +234,9 @@ export default function ElectionDetail() {
 function shorten(value) {
   if (!value) return "";
   return `${String(value).slice(0, 8)}...${String(value).slice(-6)}`;
+}
+
+async function copyText(value) {
+  await navigator.clipboard.writeText(value);
+  toast.success("Copied");
 }
