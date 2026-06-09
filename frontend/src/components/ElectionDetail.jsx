@@ -11,9 +11,10 @@ import {
   RefreshCw,
   ShieldCheck,
   Square,
+  Trash2,
   Upload,
 } from "lucide-react";
-import { deployElection, endVoting, getElection, sendInvitations, startVoting } from "../services/api";
+import { archiveElection, deployElection, endVoting, getElection, sendInvitations, startVoting } from "../services/api";
 import contractsConfig from "../config/contracts.json";
 import { participation, StatusBadge } from "./OrganizationDashboard";
 
@@ -189,6 +190,19 @@ export default function ElectionDetail() {
             }
           >
             <Mail size={16} /> Generate invitations
+          </button>
+          <button
+            className="btn btn-danger"
+            disabled={actionLoading}
+            onClick={() => {
+              if (!window.confirm("Remove this election from the active dashboard?")) return;
+              runAction(async () => {
+                await archiveElection(election._id);
+                navigate("/dashboard");
+              }, "Election removed");
+            }}
+          >
+            <Trash2 size={16} /> Remove election
           </button>
         </div>
         {invitationLinks.length > 0 && (

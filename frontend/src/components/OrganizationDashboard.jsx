@@ -32,12 +32,17 @@ export default function OrganizationDashboard({ organization }) {
     load();
   }, []);
 
+  const activeElections = useMemo(
+    () => elections.filter((election) => election.status !== "archived"),
+    [elections]
+  );
+
   const stats = useMemo(() => {
-    const totalVoters = elections.reduce((sum, election) => sum + (election.voterCount || 0), 0);
-    const totalVotes = elections.reduce((sum, election) => sum + (election.votesCast || 0), 0);
-    const open = elections.filter((election) => election.status === "voting_open").length;
+    const totalVoters = activeElections.reduce((sum, election) => sum + (election.voterCount || 0), 0);
+    const totalVotes = activeElections.reduce((sum, election) => sum + (election.votesCast || 0), 0);
+    const open = activeElections.filter((election) => election.status === "voting_open").length;
     return { totalVoters, totalVotes, open };
-  }, [elections]);
+  }, [activeElections]);
 
   return (
     <div>
@@ -57,7 +62,7 @@ export default function OrganizationDashboard({ organization }) {
       </div>
 
       <div className="metric-grid">
-        <Metric icon={<Vote size={18} />} label="Elections" value={elections.length} />
+        <Metric icon={<Vote size={18} />} label="Elections" value={activeElections.length} />
         <Metric icon={<CalendarClock size={18} />} label="Open now" value={stats.open} />
         <Metric icon={<Users size={18} />} label="Imported voters" value={stats.totalVoters} />
         <Metric icon={<BarChart3 size={18} />} label="Votes cast" value={stats.totalVotes} />
@@ -69,7 +74,7 @@ export default function OrganizationDashboard({ organization }) {
         </div>
         {loading ? (
           <div className="empty-state">Loading elections...</div>
-        ) : elections.length === 0 ? (
+        ) : activeElections.length === 0 ? (
           <div className="empty-state">
             <p>No elections yet.</p>
             <Link className="btn btn-primary" to="/dashboard/elections/new">
@@ -90,7 +95,7 @@ export default function OrganizationDashboard({ organization }) {
                 </tr>
               </thead>
               <tbody>
-                {elections.map((election) => (
+                {activeElections.map((election) => (
                   <tr key={election._id}>
                     <td>
                       <strong>{election.title}</strong>
