@@ -1,0 +1,12 @@
+{
+  "generatedAt": "2026-06-09T23:13:14.396Z",
+  "circuit": "voting.circom",
+  "ptauFile": ".\\ptau\\powersOfTau28_hez_final_15.ptau",
+  "ptauUrl": "https://storage.googleapis.com/zkevm/ptau/powersOfTau28_hez_final_15.ptau",
+  "ptauBlake2b": "982372c867d229c236091f767e703253249a9b432c1710b4f326306bfa2428a17b06240359606cfe4d580b10a5a1f63fbed499527069c18ae17060472969ae6e",
+  "r1csSha256": "2687531eb3a6a2365e90624366f3394a9c8719df151c12ce9b77ee4af94554d9",
+  "wasmSha256": "1ceab1378f4445f219a650c05d6071c7ae33e3a22d502452439de58806f90ba0",
+  "zkeySha256": "26218f0d4a73f76b1b57e29640fbb2049b5f9b760187ebcaf846b41a4ea33463",
+  "verificationKeySha256": "933fd058a4c3911e5931c03eb2dfaca1b6a8fb04a228015b3200456b437b5050",
+  "warning": "Run a public multi-party Phase 2 ceremony before real production launch."
+}

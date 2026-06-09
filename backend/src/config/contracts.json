@@ -1,0 +1,17 @@
+{
+  "network": "localhost",
+  "chainId": "31337",
+  "verifierAddress": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "factoryAddress": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+  "votingAddress": "0xCafac3dD18aC6c6e92c921884f9E4176737C052c",
+  "electionName": "Student Council Election 2026",
+  "candidates": [
+    "Alice Chen",
+    "Bob Martinez",
+    "Carol Smith",
+    "David Lee"
+  ],
+  "deployedAt": "2026-06-09T00:03:48.183Z",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "LOCALMode": true
+}

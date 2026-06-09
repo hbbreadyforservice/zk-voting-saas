@@ -1,4 +1,16 @@
 $ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
+
+function Run-Step {
+  param(
+    [Parameter(Mandatory = $true)]
+    [ScriptBlock] $Command
+  )
+  & $Command
+  if ($LASTEXITCODE -ne 0) {
+    throw "Command failed with exit code $LASTEXITCODE"
+  }
+}
 
 $CircuitName = "voting"
 $BuildDir = ".\build"
@@ -39,27 +51,27 @@ Write-Host "  PTAU blake2b verified: $actualPtauHash"
 
 Write-Host ""
 Write-Host "[3/6] Compiling $CircuitName.circom"
-circom "$CircuitName.circom" --r1cs --wasm --sym --output $BuildDir -l ..\node_modules
-npx snarkjs r1cs info "$BuildDir\$CircuitName.r1cs"
+Run-Step { circom "$CircuitName.circom" --r1cs --wasm --sym --output $BuildDir -l ..\node_modules }
+Run-Step { npx snarkjs r1cs info "$BuildDir\$CircuitName.r1cs" }
 
 Write-Host ""
 Write-Host "[4/6] Running circuit-specific Groth16 setup"
-npx snarkjs groth16 setup "$BuildDir\$CircuitName.r1cs" $PtauFile "$BuildDir\${CircuitName}_0000.zkey"
+Run-Step { npx snarkjs groth16 setup "$BuildDir\$CircuitName.r1cs" $PtauFile "$BuildDir\${CircuitName}_0000.zkey" }
 
 $phase2Entropy = if ($env:PHASE2_ENTROPY) {
   $env:PHASE2_ENTROPY
 } else {
-  "VoteCloud production setup $(Get-Date -AsUTC -Format o) $(node -e `"console.log(require('crypto').randomBytes(32).toString('hex'))`")"
+  "VoteCloud production setup $([DateTime]::UtcNow.ToString('o')) $(node -e `"console.log(require('crypto').randomBytes(32).toString('hex'))`")"
 }
 
-npx snarkjs zkey contribute "$BuildDir\${CircuitName}_0000.zkey" "$BuildDir\${CircuitName}_0001.zkey" --name="VoteCloud initial phase2 contribution" -v -e="$phase2Entropy"
-npx snarkjs zkey beacon "$BuildDir\${CircuitName}_0001.zkey" "$BuildDir\${CircuitName}_final.zkey" $Beacon 10 -n="VoteCloud final beacon"
+Run-Step { npx snarkjs zkey contribute "$BuildDir\${CircuitName}_0000.zkey" "$BuildDir\${CircuitName}_0001.zkey" --name="VoteCloud initial phase2 contribution" -v -e="$phase2Entropy" }
+Run-Step { npx snarkjs zkey beacon "$BuildDir\${CircuitName}_0001.zkey" "$BuildDir\${CircuitName}_final.zkey" $Beacon 10 -n="VoteCloud final beacon" }
 
 Write-Host ""
 Write-Host "[5/6] Exporting verification artifacts"
-npx snarkjs zkey export verificationkey "$BuildDir\${CircuitName}_final.zkey" "$BuildDir\verification_key.json"
-npx snarkjs zkey export solidityverifier "$BuildDir\${CircuitName}_final.zkey" "..\contracts\Verifier.sol"
-npx snarkjs zkey verify "$BuildDir\$CircuitName.r1cs" $PtauFile "$BuildDir\${CircuitName}_final.zkey"
+Run-Step { npx snarkjs zkey export verificationkey "$BuildDir\${CircuitName}_final.zkey" "$BuildDir\verification_key.json" }
+Run-Step { npx snarkjs zkey export solidityverifier "$BuildDir\${CircuitName}_final.zkey" "..\contracts\Verifier.sol" }
+Run-Step { npx snarkjs zkey verify "$BuildDir\$CircuitName.r1cs" $PtauFile "$BuildDir\${CircuitName}_final.zkey" }
 
 Write-Host ""
 Write-Host "[6/6] Copying artifacts"

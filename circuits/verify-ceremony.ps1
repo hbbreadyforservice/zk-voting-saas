@@ -1,4 +1,5 @@
 $ErrorActionPreference = "Stop"
+Set-Location $PSScriptRoot
 
 $CircuitName = "voting"
 $BuildDir = ".\build"
@@ -35,15 +36,19 @@ npx snarkjs zkey verify "$BuildDir\$CircuitName.r1cs" $PtauFile "$BuildDir\${Cir
 Write-Host ""
 Write-Host "[3/4] Verifying metadata hashes if available"
 if (Test-Path -LiteralPath $MetadataFile) {
-  node -e @"
+  node -e @'
 const fs = require('fs');
 const crypto = require('crypto');
-const metadata = JSON.parse(fs.readFileSync('$($MetadataFile.Replace('\','\\'))', 'utf8'));
+const path = require('path');
+const metadataFile = process.argv[1];
+const buildDir = process.argv[2];
+const circuitName = process.argv[3];
+const metadata = JSON.parse(fs.readFileSync(metadataFile, 'utf8'));
 const files = {
-  r1csSha256: '$($BuildDir.Replace('\','\\'))\\\\$CircuitName.r1cs',
-  wasmSha256: '$($BuildDir.Replace('\','\\'))\\\\${CircuitName}_js\\\\$CircuitName.wasm',
-  zkeySha256: '$($BuildDir.Replace('\','\\'))\\\\${CircuitName}_final.zkey',
-  verificationKeySha256: '$($BuildDir.Replace('\','\\'))\\\\verification_key.json',
+  r1csSha256: path.join(buildDir, `${circuitName}.r1cs`),
+  wasmSha256: path.join(buildDir, `${circuitName}_js`, `${circuitName}.wasm`),
+  zkeySha256: path.join(buildDir, `${circuitName}_final.zkey`),
+  verificationKeySha256: path.join(buildDir, 'verification_key.json'),
 };
 for (const [key, file] of Object.entries(files)) {
   const actual = crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
@@ -55,7 +60,7 @@ for (const [key, file] of Object.entries(files)) {
   }
   console.log(`${key}: ${actual}`);
 }
-"@
+'@ $MetadataFile $BuildDir $CircuitName
 } else {
   Write-Host "  metadata file not found; skipping metadata hash check"
 }

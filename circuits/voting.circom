@@ -19,10 +19,8 @@ pragma circom 2.1.6;
  *   - Merkle path
  */
 
-include "node_modules/circomlib/circuits/poseidon.circom";
-include "node_modules/circomlib/circuits/mux1.circom";
-
-define LEVELS = 10;
+include "circomlib/circuits/poseidon.circom";
+include "circomlib/circuits/mux1.circom";
 
 template MerkleTreeChecker(levels) {
     signal input leaf;
@@ -90,4 +88,4 @@ template VoteCircuit(levels) {
 
 }
 
-component main {public [merkleRoot, nullifierHash, voteChoice]} = VoteCircuit(LEVELS);
+component main {public [merkleRoot, nullifierHash, voteChoice]} = VoteCircuit(10);
