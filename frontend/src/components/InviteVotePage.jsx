@@ -42,10 +42,10 @@ export default function InviteVotePage() {
       const credentials = createCredentials();
       const commitment = await computeCommitment(credentials.secret, credentials.nullifier);
 
-      setStatusText("Registering anonymous eligibility commitment...");
+      setStatusText("Preparing your private voting session...");
       const claim = await claimVoteInvite(electionId, token, commitment);
 
-      setStatusText("Generating zero-knowledge proof in this browser...");
+      setStatusText("Generating a private proof in this browser...");
       const generatedProof = await generateVoteProof({
         secret: credentials.secret,
         nullifier: credentials.nullifier,
@@ -85,14 +85,14 @@ export default function InviteVotePage() {
           <div className="card-title">
             <CheckCircle2 size={18} className="icon" /> Vote submitted
           </div>
-          <p className="muted-text">Your anonymous vote was accepted.</p>
+          <p className="muted-text">Your vote was submitted and your receipt is ready.</p>
           <div className="status-stack detail-status">
             <div className="status-row">
               <span>Receipt code</span>
               <strong>{result.receiptCode || "-"}</strong>
             </div>
             <div className="status-row">
-              <span>Transaction</span>
+              <span>Vote reference</span>
               <strong>{shorten(result.txHash)}</strong>
             </div>
             <div className="status-row">
@@ -101,7 +101,7 @@ export default function InviteVotePage() {
             </div>
           </div>
           <div className="alert alert-info detail-action">
-            Save your receipt code. You can use it on the results page to verify which vote was recorded.
+            Save your receipt code. You can use it on the results page to confirm the recorded candidate.
           </div>
           <a className="btn btn-primary btn-full detail-action" href={`/results/${electionId}`} target="_blank" rel="noreferrer">
             View and verify election results
@@ -117,7 +117,7 @@ export default function InviteVotePage() {
         <div className="card-title">
           <ShieldCheck size={18} className="icon" /> {election.title}
         </div>
-        <p className="muted-text">{election.description || "Secure VoteCloud election"}</p>
+          <p className="muted-text">{election.description || "Private VoteCloud election"}</p>
         <div className="status-stack detail-status">
           <div className="status-row">
             <span>Voter</span>
@@ -150,7 +150,7 @@ export default function InviteVotePage() {
           ))}
         </div>
         <div className="alert alert-info detail-action">
-          Your browser generates the private proof internally. Your secret voting credentials are never sent to VoteCloud.
+          VoteCloud prepares your private proof in this browser. Your private voting credentials are never shown or shared.
         </div>
         <button className="btn btn-primary btn-lg btn-full" disabled={submitting || selectedCandidate === null} onClick={submitSecureVote}>
           {submitting ? (

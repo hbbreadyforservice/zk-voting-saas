@@ -77,7 +77,7 @@ export default function NewElection() {
       <div className="page-header split-header">
         <div>
           <h1>Create election</h1>
-          <p>Define candidates, dates, and initial voter CSV import.</p>
+          <p>Set up candidates, voting dates, and the list of eligible voters.</p>
         </div>
         <Link className="btn btn-secondary" to="/dashboard">
           <ArrowLeft size={14} /> Back
@@ -155,8 +155,7 @@ export default function NewElection() {
             <Upload size={18} className="icon" /> Voter CSV
           </div>
           <p className="muted-text">
-            Import a CSV containing voter emails. Secrets are not generated here; the secure voter flow will keep them
-            client-side.
+            Import a CSV containing voter emails. Each voter receives a private invitation link for this election.
           </p>
           <input
             className="form-input"

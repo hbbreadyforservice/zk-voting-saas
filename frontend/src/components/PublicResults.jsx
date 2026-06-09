@@ -72,7 +72,7 @@ export default function PublicResults() {
           <div>
             <h1>Election Results</h1>
             <p>{data?.electionName}</p>
-            {data?.localMode && <span className="badge badge-warning">Demo results</span>}
+            {data?.localMode && <span className="badge badge-warning">Demo mode</span>}
           </div>
           <button className="btn btn-secondary" onClick={load}>
             <RefreshCw size={14} /> Refresh
@@ -151,7 +151,7 @@ export default function PublicResults() {
             <ShieldCheck size={18} className="icon" /> Verify your vote
           </div>
           <p className="muted-text" style={{ marginBottom: "1rem" }}>
-            Enter the receipt code shown after voting to confirm which candidate was recorded.
+            Enter the receipt code shown after voting to confirm the candidate recorded for your vote.
           </p>
           <div className="form-row">
             <input
@@ -167,7 +167,7 @@ export default function PublicResults() {
           {verification && (
             <div className="receipt-verified detail-status">
               <div className="alert alert-success">
-                Receipt verified. This code matches a recorded vote in this election.
+                Receipt verified. This code matches a recorded vote for this election.
               </div>
               <div className="status-stack">
               <div className="status-row">
@@ -203,8 +203,8 @@ export default function PublicResults() {
             lineHeight: 2,
           }}
         >
-          <li>Eligibility and anonymity are proven with zk + Merkle membership.</li>
-          <li>Only aggregate results are shown publicly in demo mode.</li>
+          <li>Voters use private invitation links, and each accepted vote receives a receipt code.</li>
+          <li>Public results show aggregate tallies. Receipt lookup reveals only the vote linked to that private code.</li>
         </ul>
       </div>
     </div>

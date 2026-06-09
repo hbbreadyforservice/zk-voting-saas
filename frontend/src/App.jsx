@@ -46,7 +46,7 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
           <div className="brand-text">
             Vote<span className="brand-accent">Cloud</span>
           </div>
-          <div className="brand-subtitle">zk voting SaaS platform</div>
+          <div className="brand-subtitle">secure election workspace</div>
         </div>
       </Link>
       <div className="navbar-links">
@@ -83,19 +83,19 @@ function HeroStrip({ organization }) {
     "/dashboard": {
       kicker: "Organization Workspace",
       title: organization ? `${organization.name} elections` : "Manage secure elections.",
-      description: "Create multiple elections, deploy contracts through VoteCloudFactory, and monitor participation.",
-      points: ["Multi-tenant", "ZK eligibility", "Merkle registry"],
+      description: "Create elections, invite voters, monitor participation, and publish verifiable results from one workspace.",
+      points: ["Private voting", "Invite links", "Live participation"],
     },
     "/dashboard/elections/new": {
       kicker: "Election Builder",
-      title: "Create a new election with candidates and voter import.",
-      description: "Prepare the election metadata and optionally deploy its smart contract immediately.",
-      points: ["Dynamic candidates", "CSV voters", "Factory deployment"],
+      title: "Create a new election and import eligible voters.",
+      description: "Define candidates, dates, and voter lists. VoteCloud prepares secure invitation links for each voter.",
+      points: ["Candidate setup", "CSV import", "Secure invitations"],
     },
     "/dashboard/billing": {
       kicker: "Billing",
       title: "Manage plan limits and subscription access.",
-      description: "Track election and voter usage, upgrade plans, and open the Stripe billing portal.",
+      description: "Track election and voter usage, upgrade your plan, and manage invoices through Stripe.",
       points: ["Starter", "Pro", "Business"],
     },
     "/voter": {
@@ -115,8 +115,8 @@ function HeroStrip({ organization }) {
   const hero = heroByPath[loc.pathname] || {
     kicker: "Election Detail",
     title: "Operate and audit one election.",
-    description: "Track status, participation, contract deployment, and lifecycle actions.",
-    points: ["Participation", "Lifecycle", "Results"],
+    description: "Open voting, send invitations, track participation, and review recorded results.",
+    points: ["Invitations", "Voting status", "Receipt verification"],
   };
 
   return (
@@ -229,8 +229,8 @@ function AppShell() {
       </main>
       {!isVoterInvite && !isPublicResults && (
         <footer className="footer">
-          <span>Subscription platform for secure digital elections</span>
-          <span>Ethereum + zk proof voting engine</span>
+          <span>VoteCloud secure election workspace</span>
+          <span>Private voter flow with verifiable receipts</span>
         </footer>
       )}
     </div>

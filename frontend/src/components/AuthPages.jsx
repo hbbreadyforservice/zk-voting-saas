@@ -33,7 +33,7 @@ export function RegisterPage({ onAuth }) {
     <AuthShell
       icon={<UserPlus size={18} className="icon" />}
       title="Create organization"
-      subtitle="Open a VoteCloud workspace for your institution."
+      subtitle="Create a secure workspace for elections, voters, and results."
     >
       <form onSubmit={submit}>
         <Field label="Organization name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
@@ -114,7 +114,7 @@ function AuthShell({ icon, title, subtitle, children }) {
       <aside className="auth-side">
         <Building2 size={26} className="icon" />
         <h2>VoteCloud</h2>
-        <p>Multi-tenant election management with blockchain settlement and zk-SNARK eligibility proofs.</p>
+        <p>Run private online elections with invite-only voting, live participation, and verifiable voter receipts.</p>
       </aside>
     </div>
   );

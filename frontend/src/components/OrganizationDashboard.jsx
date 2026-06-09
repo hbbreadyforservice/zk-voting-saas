@@ -52,7 +52,7 @@ export default function OrganizationDashboard({ organization }) {
       <div className="page-header split-header">
         <div>
           <h1>{organization?.name || "Organization dashboard"}</h1>
-          <p>Manage elections, participation, and blockchain deployment from one workspace.</p>
+          <p>Create elections, invite voters, and follow participation in real time.</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={load} disabled={loading}>
@@ -73,7 +73,7 @@ export default function OrganizationDashboard({ organization }) {
 
       {IS_DEMO_MODE && (
         <div className="alert alert-warning">
-          Demo mode is enabled. Votes are recorded in the VoteCloud backend for this demo, not on a blockchain network.
+          Demo mode is enabled. Votes are recorded in the VoteCloud backend for this demo.
         </div>
       )}
 
@@ -99,7 +99,7 @@ export default function OrganizationDashboard({ organization }) {
                   <th>Status</th>
                   <th>Participation</th>
                   <th>Voters</th>
-                  <th>Contract</th>
+                  <th>Mode</th>
                   <th></th>
                 </tr>
               </thead>
@@ -122,7 +122,7 @@ export default function OrganizationDashboard({ organization }) {
                       </div>
                     </td>
                     <td>{election.voterCount || 0}</td>
-                    <td>{election.contractAddress ? shorten(election.contractAddress) : "Not deployed"}</td>
+                    <td>{election.contractAddress ? shorten(election.contractAddress) : IS_DEMO_MODE ? "Demo" : "Not deployed"}</td>
                     <td>
                       <Link className="btn btn-secondary" to={`/dashboard/elections/${election._id}`}>
                         Open
