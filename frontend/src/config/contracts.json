@@ -1,0 +1,12 @@
+ {
+    "network": "none",
+    "chainId": "",
+    "verifierAddress": "",
+    "factoryAddress": "",
+    "votingAddress": "",
+    "electionName": "",
+    "candidates": [],
+    "deployedAt": "",
+    "deployer": "",
+    "LOCALMode": false
+  }
