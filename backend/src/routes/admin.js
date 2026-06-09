@@ -29,6 +29,10 @@ function getVoterInviteSecret() {
   return process.env.VOTER_INVITE_SECRET || process.env.JWT_SECRET || "dev-voter-invite-secret-change-me";
 }
 
+function isLOCALMode() {
+  return process.env.LOCAL_MODE === "true";
+}
+
 function requireAdmin(req, res, next) {
   if (!req.organization || !req.orgId) {
     return res.status(401).json({ error: "Organization authentication required" });
@@ -95,7 +99,12 @@ router.post(
       if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
       const durationSecs = req.body.durationHours * 3600;
-      const txHash = await startVotingOnChain(durationSecs, req.election?.contractAddress);
+      let txHash = null;
+      if (req.election?.contractAddress || !isLOCALMode()) {
+        txHash = await startVotingOnChain(durationSecs, req.election?.contractAddress);
+      } else {
+        txHash = `LOCAL-OPEN-${Date.now()}`;
+      }
 
       if (req.election) {
         req.election.status = "voting_open";
@@ -122,7 +131,12 @@ router.post(
 
 router.post("/end-voting", async (req, res, next) => {
   try {
-    const txHash = await endVotingOnChain(req.election?.contractAddress);
+    let txHash = null;
+    if (req.election?.contractAddress || !isLOCALMode()) {
+      txHash = await endVotingOnChain(req.election?.contractAddress);
+    } else {
+      txHash = `LOCAL-CLOSE-${Date.now()}`;
+    }
 
     if (req.election) {
       req.election.status = "closed";
