@@ -1,21 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
-import { CheckCircle2, Cpu, Key, Send, ShieldCheck, Vote } from "lucide-react";
+import { CheckCircle2, ShieldCheck, Vote } from "lucide-react";
 import { castInviteVote, claimVoteInvite, getVoteInvite } from "../services/api";
 import { computeCommitment, generateVoteProof } from "../services/zkProof";
 
 export default function InviteVotePage() {
   const { electionId, token } = useParams();
   const [loading, setLoading] = useState(true);
-  const [claiming, setClaiming] = useState(false);
-  const [proofLoading, setProofLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [statusText, setStatusText] = useState("");
   const [invite, setInvite] = useState(null);
-  const [credentials, setCredentials] = useState(null);
-  const [claim, setClaim] = useState(null);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
-  const [generatedProof, setGeneratedProof] = useState(null);
   const [result, setResult] = useState(null);
 
   useEffect(() => {
@@ -36,29 +32,21 @@ export default function InviteVotePage() {
   const election = invite?.election;
   const canVote = election?.status === "voting_open" || election?.status === "scheduled";
 
-  async function claimInvite() {
-    setClaiming(true);
-    try {
-      const nextCredentials = createCredentials();
-      const commitment = await computeCommitment(nextCredentials.secret, nextCredentials.nullifier);
-      const claimData = await claimVoteInvite(electionId, token, commitment);
-      setCredentials(nextCredentials);
-      setClaim(claimData);
-      toast.success("Eligibility commitment registered");
-    } catch (err) {
-      toast.error(err.response?.data?.error || "Could not claim invitation");
-    } finally {
-      setClaiming(false);
-    }
-  }
-
-  async function generateProof() {
+  async function submitSecureVote() {
     if (selectedCandidate === null) return toast.error("Select a candidate");
-    if (!credentials || !claim) return toast.error("Claim the invitation first");
+    if (!canVote) return toast.error("This election is not open for voting yet");
 
-    setProofLoading(true);
+    setSubmitting(true);
     try {
-      const proof = await generateVoteProof({
+      setStatusText("Generating private voting credentials...");
+      const credentials = createCredentials();
+      const commitment = await computeCommitment(credentials.secret, credentials.nullifier);
+
+      setStatusText("Registering anonymous eligibility commitment...");
+      const claim = await claimVoteInvite(electionId, token, commitment);
+
+      setStatusText("Generating zero-knowledge proof in this browser...");
+      const generatedProof = await generateVoteProof({
         secret: credentials.secret,
         nullifier: credentials.nullifier,
         voteChoice: selectedCandidate,
@@ -66,19 +54,8 @@ export default function InviteVotePage() {
         pathIndices: claim.pathIndices,
         merkleRoot: claim.merkleRoot,
       });
-      setGeneratedProof(proof);
-      toast.success("Proof generated in browser");
-    } catch (err) {
-      toast.error(err.message || "Proof generation failed");
-    } finally {
-      setProofLoading(false);
-    }
-  }
 
-  async function submitVote() {
-    if (!generatedProof) return;
-    setSubmitting(true);
-    try {
+      setStatusText("Submitting secure vote...");
       const data = await castInviteVote(
         electionId,
         token,
@@ -87,11 +64,13 @@ export default function InviteVotePage() {
         generatedProof.nullifierHash,
         generatedProof.voteChoice
       );
+
       setResult(data);
       toast.success("Vote submitted");
     } catch (err) {
-      toast.error(err.response?.data?.error || "Vote submission failed");
+      toast.error(err.response?.data?.error || err.message || "Vote submission failed");
     } finally {
+      setStatusText("");
       setSubmitting(false);
     }
   }
@@ -106,23 +85,26 @@ export default function InviteVotePage() {
           <div className="card-title">
             <CheckCircle2 size={18} className="icon" /> Vote submitted
           </div>
-          <p className="muted-text">Your anonymous vote was accepted and submitted on-chain.</p>
+          <p className="muted-text">Your anonymous vote was accepted.</p>
           <div className="status-stack detail-status">
+            <div className="status-row">
+              <span>Receipt code</span>
+              <strong>{result.receiptCode || "-"}</strong>
+            </div>
             <div className="status-row">
               <span>Transaction</span>
               <strong>{shorten(result.txHash)}</strong>
-            </div>
-            <div className="status-row">
-              <span>Nullifier hash</span>
-              <strong>{shorten(result.nullifierHash)}</strong>
             </div>
             <div className="status-row">
               <span>Candidate index</span>
               <strong>{result.voteChoice}</strong>
             </div>
           </div>
+          <div className="alert alert-info detail-action">
+            Save your receipt code. You can use it on the results page to verify which vote was recorded.
+          </div>
           <a className="btn btn-primary btn-full detail-action" href={`/results/${electionId}`} target="_blank" rel="noreferrer">
-            View election results
+            View and verify election results
           </a>
         </section>
       </div>
@@ -145,28 +127,7 @@ export default function InviteVotePage() {
             <span>Status</span>
             <strong>{election.status}</strong>
           </div>
-          <div className="status-row">
-            <span>Contract</span>
-            <strong>{election.contractAddress ? shorten(election.contractAddress) : "Not deployed"}</strong>
-          </div>
         </div>
-      </section>
-
-      <section className="card">
-        <div className="card-title">
-          <Key size={18} className="icon" /> Eligibility commitment
-        </div>
-        <p className="muted-text">
-          This browser generates your voting secret and nullifier locally. Only the Poseidon commitment is sent to
-          VoteCloud.
-        </p>
-        {!claim ? (
-          <button className="btn btn-primary btn-full" disabled={claiming} onClick={claimInvite}>
-            <Key size={16} /> {claiming ? "Registering..." : "Generate local credentials"}
-          </button>
-        ) : (
-          <CredentialSummary />
-        )}
       </section>
 
       <section className="card">
@@ -188,33 +149,21 @@ export default function InviteVotePage() {
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="card">
-        <div className="card-title">
-          <Cpu size={18} className="icon" /> Proof and submission
+        <div className="alert alert-info detail-action">
+          Your browser generates the private proof internally. Your secret voting credentials are never sent to VoteCloud.
         </div>
-        <div className="action-grid">
-          <button className="btn btn-secondary" disabled={!claim || proofLoading} onClick={generateProof}>
-            <Cpu size={16} /> {proofLoading ? "Generating..." : "Generate zk proof"}
-          </button>
-          <button className="btn btn-primary" disabled={!generatedProof || submitting} onClick={submitVote}>
-            <Send size={16} /> {submitting ? "Submitting..." : "Submit vote"}
-          </button>
-        </div>
+        <button className="btn btn-primary btn-lg btn-full" disabled={submitting || selectedCandidate === null} onClick={submitSecureVote}>
+          {submitting ? (
+            <>
+              <div className="spinner" /> {statusText || "Submitting..."}
+            </>
+          ) : (
+            <>
+              <Vote size={18} /> Submit secure vote
+            </>
+          )}
+        </button>
       </section>
-    </div>
-  );
-}
-
-function CredentialSummary() {
-  return (
-    <div className="status-stack detail-status">
-      <div className="alert alert-success">Commitment registered. Keep these credentials private.</div>
-      <div className="status-row">
-        <span>Credential state</span>
-        <strong>Stored in this browser session</strong>
-      </div>
     </div>
   );
 }

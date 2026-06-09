@@ -76,6 +76,8 @@ export const getBillingPortal = () => api.get("/billing/portal").then((r) => r.d
 export const getElectionInfo = () => api.get("/public/election-info").then((r) => r.data);
 export const getPublicElectionResults = (electionId) =>
   api.get(`/public/elections/${electionId}/results`).then((r) => r.data);
+export const verifyVoteReceipt = (electionId, receiptCode) =>
+  api.post(`/public/elections/${electionId}/receipt`, { receiptCode }).then((r) => r.data);
 export const getResults = () => api.get("/public/results").then((r) => r.data);
 export const getMerkleRoot = () => api.get("/public/merkle-root").then((r) => r.data);
 export const getLOCALVoters = () => api.get("/public/LOCAL-voters").then((r) => r.data);

@@ -2,11 +2,13 @@
  * routes/public.js
  */
 const router = require("express").Router();
+const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { getElectionResults, getMerkleRoot } = require("../services/blockchain");
 const AuditLog = require("../models/AuditLog");
 const Election = require("../models/Election");
+const Voter = require("../models/Voter");
 
 function isLOCALMode() {
   if (process.env.LOCAL_MODE === "true") return true;
@@ -21,6 +23,10 @@ function isLOCALMode() {
   } catch {
     return false;
   }
+}
+
+function hashReceiptCode(code) {
+  return crypto.createHash("sha256").update(String(code || "").replace(/[^a-zA-Z0-9]/g, "").toUpperCase()).digest("hex");
 }
 
 router.get("/elections/:electionId/results", async (req, res, next) => {
@@ -69,6 +75,44 @@ router.get("/elections/:electionId/results", async (req, res, next) => {
         name: candidate.name,
         votes: tallies[index],
       })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post("/elections/:electionId/receipt", async (req, res, next) => {
+  try {
+    const { electionId } = req.params;
+    if (!/^[a-f\d]{24}$/i.test(String(electionId))) {
+      return res.status(400).json({ error: "Invalid electionId" });
+    }
+
+    const receiptCode = String(req.body?.receiptCode || "").trim();
+    if (!receiptCode) return res.status(400).json({ error: "Receipt code is required" });
+
+    const [election, voter] = await Promise.all([
+      Election.findById(electionId).select("title candidates"),
+      Voter.findOne({ electionId, receiptCodeHash: hashReceiptCode(receiptCode), voted: true }).select(
+        "email voteChoice voteTxHash votedAt"
+      ),
+    ]);
+
+    if (!election) return res.status(404).json({ error: "Election not found" });
+    if (!voter) return res.status(404).json({ error: "No vote matched this receipt code" });
+
+    const candidate = election.candidates[voter.voteChoice] || null;
+    res.json({
+      verified: true,
+      electionName: election.title,
+      votedAt: voter.votedAt,
+      txHash: voter.voteTxHash,
+      candidate: candidate
+        ? {
+            index: voter.voteChoice,
+            name: candidate.name,
+          }
+        : null,
     });
   } catch (err) {
     next(err);

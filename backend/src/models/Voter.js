@@ -20,6 +20,9 @@ const voterSchema = new mongoose.Schema(
     invitedAt: { type: Date, default: null },
     claimedAt: { type: Date, default: null },
     votedAt: { type: Date, default: null },
+    voteChoice: { type: Number, default: null },
+    voteTxHash: { type: String, default: null },
+    receiptCodeHash: { type: String, default: null, index: true },
     inviteStatus: {
       type: String,
       enum: ["pending", "sent", "claimed", "voted"],

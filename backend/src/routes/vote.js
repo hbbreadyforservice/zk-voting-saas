@@ -32,6 +32,14 @@ function isLOCALMode() {
   return process.env.LOCAL_MODE === "true";
 }
 
+function createReceiptCode() {
+  return crypto.randomBytes(8).toString("hex").toUpperCase().replace(/(.{4})/g, "$1-").replace(/-$/, "");
+}
+
+function hashReceiptCode(code) {
+  return crypto.createHash("sha256").update(String(code).replace(/[^a-zA-Z0-9]/g, "").toUpperCase()).digest("hex");
+}
+
 async function loadInvite(req, res, next) {
   try {
     const { electionId, token } = req.params;
@@ -212,15 +220,19 @@ router.post(
         const valid = await verifyProofOffChain(proof, publicSignals);
         if (!valid) return res.status(400).json({ error: "Invalid zk-SNARK proof" });
 
+        const txHash = `LOCAL-${crypto.randomBytes(16).toString("hex")}`;
+        const receiptCode = createReceiptCode();
         voter.voted = true;
         voter.votedAt = new Date();
         voter.inviteStatus = "voted";
+        voter.voteChoice = Number(voteChoice);
+        voter.voteTxHash = txHash;
+        voter.receiptCodeHash = hashReceiptCode(receiptCode);
         await voter.save();
 
         election.votesCast += 1;
         await election.save();
 
-        const txHash = `LOCAL-${crypto.randomBytes(16).toString("hex")}`;
         await AuditLog.create({
           orgId: election.orgId,
           electionId: election._id,
@@ -238,6 +250,7 @@ router.post(
           blockNumber: null,
           nullifierHash,
           voteChoice,
+          receiptCode,
         });
       }
 
@@ -262,6 +275,10 @@ router.post(
       voter.voted = true;
       voter.votedAt = new Date();
       voter.inviteStatus = "voted";
+      voter.voteChoice = Number(voteChoice);
+      voter.voteTxHash = txHash;
+      const receiptCode = createReceiptCode();
+      voter.receiptCodeHash = hashReceiptCode(receiptCode);
       await voter.save();
 
       election.votesCast += 1;
@@ -284,7 +301,7 @@ router.post(
         voteDate: voter.votedAt,
       }).catch((err) => ({ sent: false, error: err.message }));
 
-      res.json({ success: true, txHash, blockNumber, nullifierHash, voteChoice, email: emailResult });
+      res.json({ success: true, txHash, blockNumber, nullifierHash, voteChoice, receiptCode, email: emailResult });
     } catch (err) {
       if (err.message?.includes("NullifierAlreadySpent")) {
         return res.status(400).json({ error: "This voter has already voted" });

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BarChart3, RefreshCw, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
-import { getElectionInfo, getPublicElectionResults } from "../services/api";
+import { getElectionInfo, getPublicElectionResults, verifyVoteReceipt } from "../services/api";
 
 const COLORS = ["var(--accent)", "#0f766e", "#d97706", "#15803d"];
 
@@ -10,6 +10,9 @@ export default function PublicResults() {
   const { electionId } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [receiptCode, setReceiptCode] = useState("");
+  const [verification, setVerification] = useState(null);
+  const [verifying, setVerifying] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -30,6 +33,23 @@ export default function PublicResults() {
   function formatTime(ts) {
     if (!ts) return "-";
     return new Date(ts * 1000).toLocaleString();
+  }
+
+  async function verifyReceipt() {
+    if (!electionId) return toast.error("Open a specific election results link to verify a receipt");
+    if (!receiptCode.trim()) return toast.error("Enter your receipt code");
+
+    setVerifying(true);
+    setVerification(null);
+    try {
+      const res = await verifyVoteReceipt(electionId, receiptCode);
+      setVerification(res);
+      toast.success("Vote receipt verified");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Receipt could not be verified");
+    } finally {
+      setVerifying(false);
+    }
   }
 
   if (loading) {
@@ -115,6 +135,46 @@ export default function PublicResults() {
           })
         )}
       </div>
+
+      {electionId && (
+        <div className="card">
+          <div className="card-title">
+            <ShieldCheck size={18} className="icon" /> Verify your vote
+          </div>
+          <p className="muted-text" style={{ marginBottom: "1rem" }}>
+            Enter the receipt code shown after voting to confirm which candidate was recorded.
+          </p>
+          <div className="form-row">
+            <input
+              className="form-input"
+              value={receiptCode}
+              onChange={(event) => setReceiptCode(event.target.value)}
+              placeholder="ABCD-1234-EFGH-5678"
+            />
+            <button className="btn btn-primary" disabled={verifying} onClick={verifyReceipt}>
+              {verifying ? "Verifying..." : "Verify receipt"}
+            </button>
+          </div>
+          {verification && (
+            <div className="status-stack detail-status">
+              <div className="status-row">
+                <span>Election</span>
+                <strong>{verification.electionName}</strong>
+              </div>
+              <div className="status-row">
+                <span>Recorded vote</span>
+                <strong>
+                  {verification.candidate?.name} #{verification.candidate?.index}
+                </strong>
+              </div>
+              <div className="status-row">
+                <span>Vote reference</span>
+                <strong>{verification.txHash}</strong>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="card">
         <div className="card-title">
