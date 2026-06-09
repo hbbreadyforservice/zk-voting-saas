@@ -5,10 +5,12 @@ const router = require("express").Router();
 const fs = require("fs");
 const path = require("path");
 const { getElectionResults, getMerkleRoot } = require("../services/blockchain");
+const AuditLog = require("../models/AuditLog");
+const Election = require("../models/Election");
 
 function isLOCALMode() {
-  if (process.env.NODE_ENV === "production") return false;
   if (process.env.LOCAL_MODE === "true") return true;
+  if (process.env.NODE_ENV === "production") return false;
 
   const contractsPath = path.join(__dirname, "../config/contracts.json");
   if (!fs.existsSync(contractsPath)) return false;
@@ -20,6 +22,58 @@ function isLOCALMode() {
     return false;
   }
 }
+
+router.get("/elections/:electionId/results", async (req, res, next) => {
+  try {
+    const { electionId } = req.params;
+    if (!/^[a-f\d]{24}$/i.test(String(electionId))) {
+      return res.status(400).json({ error: "Invalid electionId" });
+    }
+
+    const election = await Election.findById(electionId).select(
+      "title description status candidates voterCount votesCast contractAddress chainId startDate endDate createdAt"
+    );
+    if (!election) return res.status(404).json({ error: "Election not found" });
+
+    if (election.contractAddress && !isLOCALMode()) {
+      return res.json(await getElectionResults(election.contractAddress));
+    }
+
+    const logs = await AuditLog.find({
+      electionId: election._id,
+      action: { $in: ["vote.submitted.local", "vote.submitted"] },
+    }).select("metadata");
+
+    const tallies = new Array(election.candidates.length).fill(0);
+    for (const log of logs) {
+      const choice = Number(log.metadata?.voteChoice);
+      if (Number.isInteger(choice) && choice >= 0 && choice < tallies.length) {
+        tallies[choice] += 1;
+      }
+    }
+
+    res.json({
+      electionId: election._id,
+      electionName: election.title,
+      description: election.description,
+      isOpen: election.status === "voting_open" || election.status === "scheduled",
+      status: election.status,
+      startTime: election.startDate ? Math.floor(new Date(election.startDate).getTime() / 1000) : 0,
+      endTime: election.endDate ? Math.floor(new Date(election.endDate).getTime() / 1000) : 0,
+      totalVotes: tallies.reduce((sum, votes) => sum + votes, 0),
+      registeredVoters: election.voterCount || 0,
+      numCandidates: election.candidates.length,
+      localMode: !election.contractAddress,
+      results: election.candidates.map((candidate, index) => ({
+        candidateIndex: index,
+        name: candidate.name,
+        votes: tallies[index],
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
 
 router.get("/election-info", async (_req, res, next) => {
   try {

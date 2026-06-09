@@ -121,6 +121,9 @@ export default function InviteVotePage() {
               <strong>{result.voteChoice}</strong>
             </div>
           </div>
+          <a className="btn btn-primary btn-full detail-action" href={`/results/${electionId}`} target="_blank" rel="noreferrer">
+            View election results
+          </a>
         </section>
       </div>
     );

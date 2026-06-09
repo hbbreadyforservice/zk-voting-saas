@@ -69,7 +69,13 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
 
 function HeroStrip({ organization }) {
   const loc = useLocation();
-  if (["/login", "/register"].includes(loc.pathname) || loc.pathname.startsWith("/vote/")) return null;
+  if (
+    ["/login", "/register"].includes(loc.pathname) ||
+    loc.pathname.startsWith("/vote/") ||
+    loc.pathname.startsWith("/results")
+  ) {
+    return null;
+  }
 
   const heroByPath = {
     "/dashboard": {
@@ -142,6 +148,7 @@ function AppShell() {
   const [organization, setOrganization] = useState(() => getStoredOrganization());
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
   const isVoterInvite = loc.pathname.startsWith("/vote/");
+  const isPublicResults = loc.pathname.startsWith("/results");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -156,7 +163,7 @@ function AppShell() {
 
   return (
     <div className="app">
-      {!isVoterInvite && (
+      {!isVoterInvite && !isPublicResults && (
         <NavBar
           organization={organization}
           onLogout={logout}
@@ -206,6 +213,7 @@ function AppShell() {
           />
           <Route path="/voter" element={<Navigate to="/dashboard" replace />} />
           <Route path="/results" element={<PublicResults />} />
+          <Route path="/results/:electionId" element={<PublicResults />} />
           <Route
             path="/admin"
             element={
@@ -217,7 +225,7 @@ function AppShell() {
           <Route path="*" element={<Navigate to={organization ? "/dashboard" : "/login"} replace />} />
         </Routes>
       </main>
-      {!isVoterInvite && (
+      {!isVoterInvite && !isPublicResults && (
         <footer className="footer">
           <span>Subscription platform for secure digital elections</span>
           <span>Ethereum + zk proof voting engine</span>

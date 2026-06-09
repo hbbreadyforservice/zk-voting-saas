@@ -1,18 +1,20 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { BarChart3, RefreshCw, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
-import { getElectionInfo } from "../services/api";
+import { getElectionInfo, getPublicElectionResults } from "../services/api";
 
 const COLORS = ["var(--accent)", "#0f766e", "#d97706", "#15803d"];
 
 export default function PublicResults() {
+  const { electionId } = useParams();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
     setLoading(true);
     try {
-      const res = await getElectionInfo();
+      const res = electionId ? await getPublicElectionResults(electionId) : await getElectionInfo();
       setData(res);
     } catch {
       toast.error("Could not load results");
@@ -23,7 +25,7 @@ export default function PublicResults() {
 
   useEffect(() => {
     load();
-  }, []);
+  }, [electionId]);
 
   function formatTime(ts) {
     if (!ts) return "-";
@@ -66,6 +68,14 @@ export default function PublicResults() {
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Total Votes</div>
           <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{totalVotes}</div>
         </div>
+        {data?.registeredVoters !== undefined && (
+          <div className="card" style={{ padding: "1rem", marginBottom: 0 }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>
+              Registered Voters
+            </div>
+            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{data.registeredVoters}</div>
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -110,12 +120,19 @@ export default function PublicResults() {
         <div className="card-title">
           <ShieldCheck size={18} className="icon" /> Privacy Model
         </div>
-        <ul style={{ fontSize: "0.875rem", color: "var(--text-muted)", marginTop: "0.75rem", paddingLeft: "1.25rem", lineHeight: 2 }}>
+        <ul
+          style={{
+            fontSize: "0.875rem",
+            color: "var(--text-muted)",
+            marginTop: "0.75rem",
+            paddingLeft: "1.25rem",
+            lineHeight: 2,
+          }}
+        >
           <li>Eligibility and anonymity are proven with zk + Merkle membership.</li>
-          <li>Vote choice is public on-chain to support immediate live tally.</li>
+          <li>Only aggregate results are shown publicly in demo mode.</li>
         </ul>
       </div>
     </div>
   );
 }
-
