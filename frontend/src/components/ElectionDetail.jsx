@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   ArrowLeft,
@@ -19,6 +19,7 @@ import { participation, StatusBadge } from "./OrganizationDashboard";
 
 export default function ElectionDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [election, setElection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
@@ -165,6 +166,13 @@ export default function ElectionDetail() {
             disabled={actionLoading}
             onClick={() =>
               runAction(async () => {
+                if (!localStorage.getItem("orgAccessToken")) {
+                  localStorage.removeItem("organization");
+                  localStorage.removeItem("orgRefreshToken");
+                  toast.error("Session expired. Please log in again.");
+                  navigate("/login");
+                  return;
+                }
                 const data = await sendInvitations(election._id);
                 setInvitationLinks(data.invitationLinks || []);
                 setInvitationSummary({

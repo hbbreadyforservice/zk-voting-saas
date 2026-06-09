@@ -16,6 +16,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAuthSession();
+      if (!window.location.pathname.startsWith("/login") && !window.location.pathname.startsWith("/vote/")) {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export function saveAuthSession(data) {
   localStorage.setItem("orgAccessToken", data.accessToken);
   localStorage.setItem("orgRefreshToken", data.refreshToken);
