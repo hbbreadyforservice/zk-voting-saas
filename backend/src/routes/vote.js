@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 
@@ -25,6 +26,10 @@ function isUintString(value) {
 
 function getVoterInviteSecret() {
   return process.env.VOTER_INVITE_SECRET || process.env.JWT_SECRET || "dev-voter-invite-secret-change-me";
+}
+
+function isLOCALMode() {
+  return process.env.LOCAL_MODE === "true";
 }
 
 async function loadInvite(req, res, next) {
@@ -190,7 +195,9 @@ router.post(
         return res.status(409).json({ error: "Invitation must be claimed before voting" });
       }
       if (voter.voted) return res.status(400).json({ error: "This voter has already voted" });
-      if (!election.contractAddress) return res.status(409).json({ error: "Election contract is not deployed" });
+      if (!election.contractAddress && !isLOCALMode()) {
+        return res.status(409).json({ error: "Election contract is not deployed" });
+      }
       if (voteChoice < 0 || voteChoice >= election.candidates.length) {
         return res.status(400).json({ error: "Invalid candidate index" });
       }
@@ -199,6 +206,39 @@ router.post(
       }
       if (election.merkleRoot && String(publicSignals[0]) !== String(election.merkleRoot)) {
         return res.status(400).json({ error: "Merkle root mismatch" });
+      }
+
+      if (isLOCALMode() && !election.contractAddress) {
+        const valid = await verifyProofOffChain(proof, publicSignals);
+        if (!valid) return res.status(400).json({ error: "Invalid zk-SNARK proof" });
+
+        voter.voted = true;
+        voter.votedAt = new Date();
+        voter.inviteStatus = "voted";
+        await voter.save();
+
+        election.votesCast += 1;
+        await election.save();
+
+        const txHash = `LOCAL-${crypto.randomBytes(16).toString("hex")}`;
+        await AuditLog.create({
+          orgId: election.orgId,
+          electionId: election._id,
+          actorType: "voter",
+          actorId: voter._id.toString(),
+          action: "vote.submitted.local",
+          txHash,
+          metadata: { nullifierHash, voteChoice },
+        }).catch(() => null);
+
+        return res.json({
+          success: true,
+          localMode: true,
+          txHash,
+          blockNumber: null,
+          nullifierHash,
+          voteChoice,
+        });
       }
 
       const onChainRoot = await getMerkleRootForContract(election.contractAddress).catch(() => null);
