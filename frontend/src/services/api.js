@@ -16,9 +16,38 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise = null;
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    const isAuthRoute = originalRequest?.url?.startsWith("/auth/");
+    const refreshToken = localStorage.getItem("orgRefreshToken");
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthRoute && refreshToken) {
+      originalRequest._retry = true;
+
+      try {
+        if (!refreshPromise) {
+          refreshPromise = refreshOrganizationSession(refreshToken)
+            .then((data) => {
+              saveAuthSession(data);
+              return data.accessToken;
+            })
+            .finally(() => {
+              refreshPromise = null;
+            });
+        }
+
+        const accessToken = await refreshPromise;
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return api(originalRequest);
+      } catch {
+        clearAuthSession();
+      }
+    }
+
     if (error.response?.status === 401) {
       clearAuthSession();
       if (!window.location.pathname.startsWith("/login") && !window.location.pathname.startsWith("/vote/")) {
