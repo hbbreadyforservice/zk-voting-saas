@@ -47,12 +47,14 @@ router.post("/", async (req, res) => {
 async function handleCheckoutCompleted(session) {
   const orgId = session.metadata?.orgId;
   if (!orgId) return;
+  const plan = ["pro", "business"].includes(session.metadata?.plan) ? session.metadata.plan : undefined;
 
   await Organization.updateOne(
     { _id: orgId },
     {
       stripeCustomerId: session.customer,
       stripeSubscriptionId: session.subscription,
+      ...(plan ? { plan, subscriptionStatus: "active" } : {}),
     }
   );
 
@@ -60,12 +62,16 @@ async function handleCheckoutCompleted(session) {
     orgId,
     actorType: "system",
     action: "billing.checkout_completed",
-    metadata: { sessionId: session.id, subscription: session.subscription },
+    metadata: { sessionId: session.id, subscription: session.subscription, plan },
   }).catch(() => null);
 }
 
 async function handleSubscriptionChanged(subscription) {
-  const orgId = subscription.metadata?.orgId;
+  let orgId = subscription.metadata?.orgId;
+  if (!orgId) {
+    const existing = await Organization.findOne({ stripeSubscriptionId: subscription.id }).select("_id");
+    orgId = existing?._id?.toString();
+  }
   if (!orgId) return;
 
   const item = subscription.items?.data?.[0];
