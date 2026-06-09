@@ -3,7 +3,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation, Navigate, useNavigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import {
-  BarChart3,
   Building2,
   LogOut,
   Moon,
@@ -30,7 +29,6 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
         { to: "/dashboard", label: "Dashboard", icon: <Building2 size={16} /> },
         { to: "/dashboard/elections/new", label: "New", icon: <Plus size={16} /> },
         { to: "/dashboard/billing", label: "Billing", icon: <CreditCard size={16} /> },
-        { to: "/results", label: "Results", icon: <BarChart3 size={16} /> },
       ]
     : [
         { to: "/login", label: "Login", icon: <Building2 size={16} /> },
