@@ -11,9 +11,7 @@ import {
   CreditCard,
   ShieldCheck,
   Sun,
-  Vote,
 } from "lucide-react";
-import VoterDashboard from "./components/VoterDashboard";
 import AdminDashboard from "./components/AdminDashboard";
 import PublicResults from "./components/PublicResults";
 import OrganizationDashboard from "./components/OrganizationDashboard";
@@ -32,7 +30,6 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
         { to: "/dashboard", label: "Dashboard", icon: <Building2 size={16} /> },
         { to: "/dashboard/elections/new", label: "New", icon: <Plus size={16} /> },
         { to: "/dashboard/billing", label: "Billing", icon: <CreditCard size={16} /> },
-        { to: "/voter", label: "Voter", icon: <Vote size={16} /> },
         { to: "/results", label: "Results", icon: <BarChart3 size={16} /> },
       ]
     : [
@@ -203,14 +200,7 @@ function AppShell() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/voter"
-            element={
-              <ProtectedRoute organization={organization}>
-                <VoterDashboard />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/voter" element={<Navigate to="/dashboard" replace />} />
           <Route path="/results" element={<PublicResults />} />
           <Route
             path="/admin"

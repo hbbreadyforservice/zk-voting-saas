@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { CheckCircle2, Cpu, Key, Send, ShieldCheck, Vote } from "lucide-react";
@@ -162,7 +162,7 @@ export default function InviteVotePage() {
             <Key size={16} /> {claiming ? "Registering..." : "Generate local credentials"}
           </button>
         ) : (
-          <CredentialSummary credentials={credentials} claim={claim} />
+          <CredentialSummary />
         )}
       </section>
 
@@ -204,28 +204,15 @@ export default function InviteVotePage() {
   );
 }
 
-function CredentialSummary({ credentials, claim }) {
-  const exportText = useMemo(
-    () =>
-      JSON.stringify(
-        {
-          secret: credentials.secret,
-          nullifier: credentials.nullifier,
-          leafIndex: claim.leafIndex,
-          merkleRoot: claim.merkleRoot,
-        },
-        null,
-        2
-      ),
-    [credentials, claim]
-  );
-
+function CredentialSummary() {
   return (
-    <>
+    <div className="status-stack detail-status">
       <div className="alert alert-success">Commitment registered. Keep these credentials private.</div>
-      <div className="credential-label">Local credentials backup</div>
-      <textarea className="form-input credential-textarea" value={exportText} readOnly rows={7} />
-    </>
+      <div className="status-row">
+        <span>Credential state</span>
+        <strong>Stored in this browser session</strong>
+      </div>
+    </div>
   );
 }
 
