@@ -61,6 +61,8 @@ export default function PublicResults() {
   }
 
   const totalVotes = data?.totalVotes || 0;
+  const registeredVoters = data?.registeredVoters || 0;
+  const turnout = registeredVoters > 0 ? Math.round((totalVotes / registeredVoters) * 1000) / 10 : 0;
   const winner = data?.results?.reduce((a, b) => (a.votes >= b.votes ? a : b), { votes: -1 });
 
   return (
@@ -70,6 +72,7 @@ export default function PublicResults() {
           <div>
             <h1>Election Results</h1>
             <p>{data?.electionName}</p>
+            {data?.localMode && <span className="badge badge-warning">Demo results</span>}
           </div>
           <button className="btn btn-secondary" onClick={load}>
             <RefreshCw size={14} /> Refresh
@@ -94,6 +97,12 @@ export default function PublicResults() {
               Registered Voters
             </div>
             <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{data.registeredVoters}</div>
+          </div>
+        )}
+        {data?.registeredVoters !== undefined && (
+          <div className="card" style={{ padding: "1rem", marginBottom: 0 }}>
+            <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginBottom: "0.25rem" }}>Turnout</div>
+            <div style={{ fontSize: "1.5rem", fontWeight: 700 }}>{turnout}%</div>
           </div>
         )}
       </div>
@@ -156,7 +165,11 @@ export default function PublicResults() {
             </button>
           </div>
           {verification && (
-            <div className="status-stack detail-status">
+            <div className="receipt-verified detail-status">
+              <div className="alert alert-success">
+                Receipt verified. This code matches a recorded vote in this election.
+              </div>
+              <div className="status-stack">
               <div className="status-row">
                 <span>Election</span>
                 <strong>{verification.electionName}</strong>
@@ -170,6 +183,7 @@ export default function PublicResults() {
               <div className="status-row">
                 <span>Vote reference</span>
                 <strong>{verification.txHash}</strong>
+              </div>
               </div>
             </div>
           )}

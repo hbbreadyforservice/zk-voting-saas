@@ -862,6 +862,13 @@ body {
   margin-top: 1rem;
 }
 
+.receipt-verified {
+  padding: 1rem;
+  border: 1px solid rgba(34,197,94,0.22);
+  border-radius: var(--radius);
+  background: rgba(34,197,94,0.06);
+}
+
 .plan-stat {
   font-size: 2.45rem;
 }
