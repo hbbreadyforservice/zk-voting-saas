@@ -148,6 +148,13 @@ router.post(
       }).catch(() => null);
 
       if (req.body.deployOnChain === true) {
+        const config = getContractsConfig();
+        if (!config.factoryAddress) {
+          return res.status(201).json({
+            election,
+            warning: "Election created, but on-chain deployment is not configured yet.",
+          });
+        }
         await deployElection(election, req);
       }
 

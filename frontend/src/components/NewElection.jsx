@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { ArrowLeft, Plus, Trash2, Upload, Vote } from "lucide-react";
 import { createElection } from "../services/api";
+import contractsConfig from "../config/contracts.json";
 
 export default function NewElection() {
   const navigate = useNavigate();
+  const canDeployOnChain = Boolean(contractsConfig?.factoryAddress);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -168,14 +170,16 @@ export default function NewElection() {
               <strong>{uniqueVoters.length}</strong>
             </div>
           </div>
-          <label className="toggle-row">
-            <input
-              type="checkbox"
-              checked={form.deployOnChain}
-              onChange={(e) => setForm({ ...form, deployOnChain: e.target.checked })}
-            />
-            <span>Deploy election contract immediately through VoteCloudFactory</span>
-          </label>
+          {canDeployOnChain && (
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={form.deployOnChain}
+                onChange={(e) => setForm({ ...form, deployOnChain: e.target.checked })}
+              />
+              <span>Deploy election contract immediately through VoteCloudFactory</span>
+            </label>
+          )}
         </section>
 
         <button className="btn btn-primary btn-lg btn-full" disabled={loading}>
