@@ -49,7 +49,12 @@ export default function ElectionDetail() {
       toast.success(success);
       await load();
     } catch (err) {
-      toast.error(err.response?.data?.error || "Action failed");
+      const detail =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
+        "Action failed";
+      toast.error(detail);
     } finally {
       setActionLoading(false);
     }
