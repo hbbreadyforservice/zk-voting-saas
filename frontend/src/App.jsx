@@ -69,7 +69,7 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
 
 function HeroStrip({ organization }) {
   const loc = useLocation();
-  if (["/login", "/register"].includes(loc.pathname)) return null;
+  if (["/login", "/register"].includes(loc.pathname) || loc.pathname.startsWith("/vote/")) return null;
 
   const heroByPath = {
     "/dashboard": {
@@ -138,8 +138,10 @@ function ProtectedRoute({ organization, children }) {
 
 function AppShell() {
   const navigate = useNavigate();
+  const loc = useLocation();
   const [organization, setOrganization] = useState(() => getStoredOrganization());
   const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+  const isVoterInvite = loc.pathname.startsWith("/vote/");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -154,12 +156,14 @@ function AppShell() {
 
   return (
     <div className="app">
-      <NavBar
-        organization={organization}
-        onLogout={logout}
-        theme={theme}
-        onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
-      />
+      {!isVoterInvite && (
+        <NavBar
+          organization={organization}
+          onLogout={logout}
+          theme={theme}
+          onToggleTheme={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
+        />
+      )}
       <main className="main-content">
         <HeroStrip organization={organization} />
 
@@ -213,10 +217,12 @@ function AppShell() {
           <Route path="*" element={<Navigate to={organization ? "/dashboard" : "/login"} replace />} />
         </Routes>
       </main>
-      <footer className="footer">
-        <span>Subscription platform for secure digital elections</span>
-        <span>Ethereum + zk proof voting engine</span>
-      </footer>
+      {!isVoterInvite && (
+        <footer className="footer">
+          <span>Subscription platform for secure digital elections</span>
+          <span>Ethereum + zk proof voting engine</span>
+        </footer>
+      )}
     </div>
   );
 }
