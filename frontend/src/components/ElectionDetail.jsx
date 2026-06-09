@@ -14,6 +14,7 @@ import {
   Upload,
 } from "lucide-react";
 import { deployElection, endVoting, getElection, sendInvitations, startVoting } from "../services/api";
+import contractsConfig from "../config/contracts.json";
 import { participation, StatusBadge } from "./OrganizationDashboard";
 
 export default function ElectionDetail() {
@@ -66,6 +67,7 @@ export default function ElectionDetail() {
     election.chainId === "11155111" && election.contractAddress
       ? `https://sepolia.etherscan.io/address/${election.contractAddress}`
       : null;
+  const canDeployOnChain = Boolean(contractsConfig?.factoryAddress);
 
   return (
     <div>
@@ -135,13 +137,15 @@ export default function ElectionDetail() {
       <section className="card">
         <div className="card-title">Election actions</div>
         <div className="action-grid">
-          <button
-            className="btn btn-secondary"
-            disabled={actionLoading || !!election.contractAddress}
-            onClick={() => runAction(() => deployElection(election._id), "Election deployed")}
-          >
-            <Upload size={16} /> Deploy contract
-          </button>
+          {canDeployOnChain && (
+            <button
+              className="btn btn-secondary"
+              disabled={actionLoading || !!election.contractAddress}
+              onClick={() => runAction(() => deployElection(election._id), "Election deployed")}
+            >
+              <Upload size={16} /> Deploy contract
+            </button>
+          )}
           <button
             className="btn btn-primary"
             disabled={actionLoading || election.status === "voting_open"}
