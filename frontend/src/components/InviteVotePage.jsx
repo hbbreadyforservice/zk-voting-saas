@@ -1,0 +1,251 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { CheckCircle2, Cpu, Key, Send, ShieldCheck, Vote } from "lucide-react";
+import { castInviteVote, claimVoteInvite, getVoteInvite } from "../services/api";
+import { computeCommitment, generateVoteProof } from "../services/zkProof";
+
+export default function InviteVotePage() {
+  const { electionId, token } = useParams();
+  const [loading, setLoading] = useState(true);
+  const [claiming, setClaiming] = useState(false);
+  const [proofLoading, setProofLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [invite, setInvite] = useState(null);
+  const [credentials, setCredentials] = useState(null);
+  const [claim, setClaim] = useState(null);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [generatedProof, setGeneratedProof] = useState(null);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    async function load() {
+      setLoading(true);
+      try {
+        const data = await getVoteInvite(electionId, token);
+        setInvite(data);
+      } catch (err) {
+        toast.error(err.response?.data?.error || "Invalid invitation");
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [electionId, token]);
+
+  const election = invite?.election;
+  const canVote = election?.status === "voting_open" || election?.status === "scheduled";
+
+  async function claimInvite() {
+    setClaiming(true);
+    try {
+      const nextCredentials = createCredentials();
+      const commitment = await computeCommitment(nextCredentials.secret, nextCredentials.nullifier);
+      const claimData = await claimVoteInvite(electionId, token, commitment);
+      setCredentials(nextCredentials);
+      setClaim(claimData);
+      toast.success("Eligibility commitment registered");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Could not claim invitation");
+    } finally {
+      setClaiming(false);
+    }
+  }
+
+  async function generateProof() {
+    if (selectedCandidate === null) return toast.error("Select a candidate");
+    if (!credentials || !claim) return toast.error("Claim the invitation first");
+
+    setProofLoading(true);
+    try {
+      const proof = await generateVoteProof({
+        secret: credentials.secret,
+        nullifier: credentials.nullifier,
+        voteChoice: selectedCandidate,
+        pathElements: claim.pathElements,
+        pathIndices: claim.pathIndices,
+        merkleRoot: claim.merkleRoot,
+      });
+      setGeneratedProof(proof);
+      toast.success("Proof generated in browser");
+    } catch (err) {
+      toast.error(err.message || "Proof generation failed");
+    } finally {
+      setProofLoading(false);
+    }
+  }
+
+  async function submitVote() {
+    if (!generatedProof) return;
+    setSubmitting(true);
+    try {
+      const data = await castInviteVote(
+        electionId,
+        token,
+        generatedProof.proof,
+        generatedProof.publicSignals,
+        generatedProof.nullifierHash,
+        generatedProof.voteChoice
+      );
+      setResult(data);
+      toast.success("Vote submitted");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Vote submission failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (loading) return <div className="card">Loading invitation...</div>;
+  if (!invite) return <div className="card">Invitation not available.</div>;
+
+  if (result) {
+    return (
+      <div className="vote-shell">
+        <section className="card">
+          <div className="card-title">
+            <CheckCircle2 size={18} className="icon" /> Vote submitted
+          </div>
+          <p className="muted-text">Your anonymous vote was accepted and submitted on-chain.</p>
+          <div className="status-stack detail-status">
+            <div className="status-row">
+              <span>Transaction</span>
+              <strong>{shorten(result.txHash)}</strong>
+            </div>
+            <div className="status-row">
+              <span>Nullifier hash</span>
+              <strong>{shorten(result.nullifierHash)}</strong>
+            </div>
+            <div className="status-row">
+              <span>Candidate index</span>
+              <strong>{result.voteChoice}</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
+  return (
+    <div className="vote-shell">
+      <section className="card">
+        <div className="card-title">
+          <ShieldCheck size={18} className="icon" /> {election.title}
+        </div>
+        <p className="muted-text">{election.description || "Secure VoteCloud election"}</p>
+        <div className="status-stack detail-status">
+          <div className="status-row">
+            <span>Voter</span>
+            <strong>{invite.voter.email}</strong>
+          </div>
+          <div className="status-row">
+            <span>Status</span>
+            <strong>{election.status}</strong>
+          </div>
+          <div className="status-row">
+            <span>Contract</span>
+            <strong>{election.contractAddress ? shorten(election.contractAddress) : "Not deployed"}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-title">
+          <Key size={18} className="icon" /> Eligibility commitment
+        </div>
+        <p className="muted-text">
+          This browser generates your voting secret and nullifier locally. Only the Poseidon commitment is sent to
+          VoteCloud.
+        </p>
+        {!claim ? (
+          <button className="btn btn-primary btn-full" disabled={claiming} onClick={claimInvite}>
+            <Key size={16} /> {claiming ? "Registering..." : "Generate local credentials"}
+          </button>
+        ) : (
+          <CredentialSummary credentials={credentials} claim={claim} />
+        )}
+      </section>
+
+      <section className="card">
+        <div className="card-title">
+          <Vote size={18} className="icon" /> Choose candidate
+        </div>
+        {!canVote && <div className="alert alert-warning">This election is not open for voting yet.</div>}
+        <div className="candidates-grid">
+          {(election.candidates || []).map((candidate, index) => (
+            <button
+              type="button"
+              key={`${candidate.name}-${index}`}
+              className={`candidate-card vote-candidate ${selectedCandidate === index ? "selected" : ""}`}
+              onClick={() => setSelectedCandidate(index)}
+            >
+              <div className="candidate-avatar">{candidate.name?.[0] || index + 1}</div>
+              <div className="candidate-name">{candidate.name}</div>
+              <div className="candidate-index">Candidate #{index}</div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <div className="card-title">
+          <Cpu size={18} className="icon" /> Proof and submission
+        </div>
+        <div className="action-grid">
+          <button className="btn btn-secondary" disabled={!claim || proofLoading} onClick={generateProof}>
+            <Cpu size={16} /> {proofLoading ? "Generating..." : "Generate zk proof"}
+          </button>
+          <button className="btn btn-primary" disabled={!generatedProof || submitting} onClick={submitVote}>
+            <Send size={16} /> {submitting ? "Submitting..." : "Submit vote"}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CredentialSummary({ credentials, claim }) {
+  const exportText = useMemo(
+    () =>
+      JSON.stringify(
+        {
+          secret: credentials.secret,
+          nullifier: credentials.nullifier,
+          leafIndex: claim.leafIndex,
+          merkleRoot: claim.merkleRoot,
+        },
+        null,
+        2
+      ),
+    [credentials, claim]
+  );
+
+  return (
+    <>
+      <div className="alert alert-success">Commitment registered. Keep these credentials private.</div>
+      <div className="credential-label">Local credentials backup</div>
+      <textarea className="form-input credential-textarea" value={exportText} readOnly rows={7} />
+    </>
+  );
+}
+
+function createCredentials() {
+  return {
+    secret: randomFieldElement(),
+    nullifier: randomFieldElement(),
+  };
+}
+
+function randomFieldElement() {
+  const bytes = new Uint8Array(31);
+  window.crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes)
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+  return BigInt(`0x${hex}`).toString();
+}
+
+function shorten(value) {
+  if (!value) return "";
+  return `${String(value).slice(0, 10)}...${String(value).slice(-8)}`;
+}

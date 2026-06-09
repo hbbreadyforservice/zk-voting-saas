@@ -1,0 +1,194 @@
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ArrowLeft, BarChart3, Mail, Play, RefreshCw, ShieldCheck, Square, Upload } from "lucide-react";
+import { deployElection, endVoting, getElection, sendInvitations, startVoting } from "../services/api";
+import { participation, StatusBadge } from "./OrganizationDashboard";
+
+export default function ElectionDetail() {
+  const { id } = useParams();
+  const [election, setElection] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [invitationLinks, setInvitationLinks] = useState([]);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await getElection(id);
+      setElection(data.election);
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Could not load election");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    load();
+  }, [id]);
+
+  async function runAction(action, success) {
+    setActionLoading(true);
+    try {
+      await action();
+      toast.success(success);
+      await load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Action failed");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="card">Loading election...</div>;
+  }
+
+  if (!election) {
+    return <div className="card">Election not found.</div>;
+  }
+
+  const pct = participation(election);
+  const explorer =
+    election.chainId === "11155111" && election.contractAddress
+      ? `https://sepolia.etherscan.io/address/${election.contractAddress}`
+      : null;
+
+  return (
+    <div>
+      <div className="page-header split-header">
+        <div>
+          <Link className="inline-back" to="/dashboard">
+            <ArrowLeft size={14} /> Dashboard
+          </Link>
+          <h1>{election.title}</h1>
+          <p>{election.description || "No description"}</p>
+        </div>
+        <div className="header-actions">
+          <button className="btn btn-secondary" onClick={load}>
+            <RefreshCw size={14} /> Refresh
+          </button>
+          <StatusBadge status={election.status} />
+        </div>
+      </div>
+
+      <div className="card-grid">
+        <section className="card">
+          <div className="card-title">
+            <BarChart3 size={18} className="icon" /> Participation
+          </div>
+          <div className="big-stat">{pct}%</div>
+          <div className="progress-bar">
+            <div className="progress-fill" style={{ width: `${pct}%` }} />
+          </div>
+          <div className="status-stack detail-status">
+            <div className="status-row">
+              <span>Voters</span>
+              <strong>{election.voterCount || 0}</strong>
+            </div>
+            <div className="status-row">
+              <span>Votes cast</span>
+              <strong>{election.votesCast || 0}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section className="card">
+          <div className="card-title">
+            <ShieldCheck size={18} className="icon" /> Blockchain
+          </div>
+          <div className="status-stack">
+            <div className="status-row">
+              <span>Contract</span>
+              <strong>{election.contractAddress ? shorten(election.contractAddress) : "Not deployed"}</strong>
+            </div>
+            <div className="status-row">
+              <span>Factory election ID</span>
+              <strong>{election.factoryElectionId || "-"}</strong>
+            </div>
+            <div className="status-row">
+              <span>Merkle root</span>
+              <strong>{election.merkleRoot ? shorten(election.merkleRoot) : "Pending"}</strong>
+            </div>
+          </div>
+          {explorer && (
+            <a className="btn btn-secondary btn-full detail-action" href={explorer} target="_blank" rel="noreferrer">
+              Open explorer
+            </a>
+          )}
+        </section>
+      </div>
+
+      <section className="card">
+        <div className="card-title">Election actions</div>
+        <div className="action-grid">
+          <button
+            className="btn btn-secondary"
+            disabled={actionLoading || !!election.contractAddress}
+            onClick={() => runAction(() => deployElection(election._id), "Election deployed")}
+          >
+            <Upload size={16} /> Deploy contract
+          </button>
+          <button
+            className="btn btn-primary"
+            disabled={actionLoading || election.status === "voting_open"}
+            onClick={() => runAction(() => startVoting(168, election._id), "Voting opened")}
+          >
+            <Play size={16} /> Open voting
+          </button>
+          <button
+            className="btn btn-secondary"
+            disabled={actionLoading || election.status !== "voting_open"}
+            onClick={() => runAction(() => endVoting(election._id), "Voting closed")}
+          >
+            <Square size={16} /> Close voting
+          </button>
+          <button
+            className="btn btn-secondary"
+            disabled={actionLoading}
+            onClick={() =>
+              runAction(async () => {
+                const data = await sendInvitations(election._id);
+                setInvitationLinks(data.invitationLinks || []);
+              }, "Invitation links generated")
+            }
+          >
+            <Mail size={16} /> Generate invitations
+          </button>
+        </div>
+        {invitationLinks.length > 0 && (
+          <div className="invitation-list">
+            <div className="credential-label">Invitation links for testing</div>
+            <textarea
+              className="form-input credential-textarea"
+              rows={Math.min(8, invitationLinks.length + 1)}
+              readOnly
+              value={invitationLinks.map((invite) => `${invite.email},${invite.url}`).join("\n")}
+            />
+          </div>
+        )}
+      </section>
+
+      <section className="card">
+        <div className="card-title">Candidates and results</div>
+        {election.candidates?.map((candidate, index) => (
+          <div className="result-item" key={`${candidate.name}-${index}`}>
+            <div className="result-header">
+              <span className="result-name">{candidate.name}</span>
+              <span className="result-votes">Candidate #{index}</span>
+            </div>
+            <div className="progress-bar compact">
+              <div className="progress-fill" style={{ width: "0%" }} />
+            </div>
+          </div>
+        ))}
+      </section>
+    </div>
+  );
+}
+
+function shorten(value) {
+  if (!value) return "";
+  return `${String(value).slice(0, 8)}...${String(value).slice(-6)}`;
+}

@@ -1,0 +1,16 @@
+.git
+node_modules
+*/node_modules
+frontend/build
+coverage
+cache
+typechain-types
+logs
+*.log
+.env
+.env.*
+!.env.production.example
+circuits/build
+circuits/ptau
+frontend/public/zkfiles/*.zkey
+backend/src/zkfiles/*.zkey

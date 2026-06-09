@@ -1,0 +1,666 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_verifier",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_electionName",
+        "type": "string"
+      },
+      {
+        "internalType": "string[]",
+        "name": "_candidates",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_durationSecs",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "AdminAlreadyExists",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "AdminNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CannotRemoveLastAdmin",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CannotRemovePrimaryAdmin",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidAdminAddress",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidCandidate",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidMerkleRoot",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidProof",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NullifierAlreadySpent",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OnlyAdmin",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "OnlyPrimaryAdmin",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotingAlreadyOpen",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotingNotOpen",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VotingPeriodExpired",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "by",
+        "type": "address"
+      }
+    ],
+    "name": "AdminAdded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "account",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "by",
+        "type": "address"
+      }
+    ],
+    "name": "AdminRemoved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "oldAdmin",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "AdminTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "ElectionEnded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "electionName",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "startTime",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "endTime",
+        "type": "uint256"
+      }
+    ],
+    "name": "ElectionStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "oldRoot",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "newRoot",
+        "type": "uint256"
+      }
+    ],
+    "name": "MerkleRootUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "nullifierHash",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "voteChoice",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoteCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "newMerkleRoot",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoterRegistered",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "addAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "admin",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "adminCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "candidateCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "candidates",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[2]",
+        "name": "pA",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256[2][2]",
+        "name": "pB",
+        "type": "uint256[2][2]"
+      },
+      {
+        "internalType": "uint256[2]",
+        "name": "pC",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "nullifierHash",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "voteChoice",
+        "type": "uint256"
+      }
+    ],
+    "name": "castVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "electionName",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "endTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "endVoting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "candidateIndex",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCandidateTally",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getElectionInfo",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "isOpen",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "start",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "end",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "totalCast",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "numCandidates",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getResults",
+    "outputs": [
+      {
+        "internalType": "string[]",
+        "name": "names",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "tallies",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isAdmin",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "nullifierHash",
+        "type": "uint256"
+      }
+    ],
+    "name": "isNullifierSpent",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "merkleRoot",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "nullifierSpent",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "oldAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "removeAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "startTime",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_durationSecs",
+        "type": "uint256"
+      }
+    ],
+    "name": "startVoting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "totalVotes",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newAdmin",
+        "type": "address"
+      }
+    ],
+    "name": "transferAdmin",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_newRoot",
+        "type": "uint256"
+      }
+    ],
+    "name": "updateMerkleRoot",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "verifier",
+    "outputs": [
+      {
+        "internalType": "contract IVerifier",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "voteTally",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "votingOpen",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

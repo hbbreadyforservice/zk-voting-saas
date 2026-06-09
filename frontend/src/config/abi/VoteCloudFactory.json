@@ -1,0 +1,296 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_verifier",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionNotFound",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidCandidates",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidDuration",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidElectionName",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "InvalidVerifier",
+    "type": "error"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "organization",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "electionAddress",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "electionName",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "createdAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "ElectionCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "electionName",
+        "type": "string"
+      },
+      {
+        "internalType": "string[]",
+        "name": "candidates",
+        "type": "string[]"
+      },
+      {
+        "internalType": "uint256",
+        "name": "durationSecs",
+        "type": "uint256"
+      }
+    ],
+    "name": "createElection",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "electionAddress",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "electionsById",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "organization",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "electionAddress",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "electionName",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "createdAt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getElection",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "id",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "organization",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "electionAddress",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "electionName",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "createdAt",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct VoteCloudFactory.ElectionRecord",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "organization",
+        "type": "address"
+      }
+    ],
+    "name": "getOrganizationElectionIds",
+    "outputs": [
+      {
+        "internalType": "uint256[]",
+        "name": "",
+        "type": "uint256[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "organization",
+        "type": "address"
+      }
+    ],
+    "name": "getOrganizationElections",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "isVoteCloudElection",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "nextElectionId",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "organization",
+        "type": "address"
+      }
+    ],
+    "name": "organizationElectionCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "verifier",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

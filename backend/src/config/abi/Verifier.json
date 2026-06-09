@@ -1,0 +1,60 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bool",
+        "name": "_shouldPass",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "inputs": [],
+    "name": "shouldPass",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[2]",
+        "name": "",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256[2][2]",
+        "name": "",
+        "type": "uint256[2][2]"
+      },
+      {
+        "internalType": "uint256[2]",
+        "name": "",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256[3]",
+        "name": "",
+        "type": "uint256[3]"
+      }
+    ],
+    "name": "verifyProof",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

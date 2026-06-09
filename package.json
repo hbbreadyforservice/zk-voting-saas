@@ -1,0 +1,33 @@
+{
+  "name": "zk-voting-system",
+  "version": "1.0.0",
+  "description": "Decentralized e-voting system with zk-SNARKs and Merkle Trees",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "compile:circuit": "cd circuits && ./setup.sh",
+    "compile:circuit:production": "powershell -ExecutionPolicy Bypass -File circuits/setup-production.ps1",
+    "verify:ceremony": "powershell -ExecutionPolicy Bypass -File circuits/verify-ceremony.ps1",
+    "compile:contracts": "npx hardhat compile",
+    "deploy:local": "npx hardhat run scripts/deploy.js --network localhost",
+    "deploy:amoy": "npx hardhat run scripts/deploy-polygon.js --network polygonAmoy",
+    "deploy:polygon": "npx hardhat run scripts/deploy-polygon.js --network polygon",
+    "node": "npx hardhat node",
+    "test": "npx hardhat test",
+    "backend": "cd backend && npm start",
+    "frontend": "cd frontend && npm start"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0",
+    "chai": "^4.3.10",
+    "ethers": "^6.9.0"
+  },
+  "dependencies": {
+    "snarkjs": "^0.7.4",
+    "circomlibjs": "^0.1.7"
+  }
+}

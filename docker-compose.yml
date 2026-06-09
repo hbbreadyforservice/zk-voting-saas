@@ -1,0 +1,61 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: votecloud-backend
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      MONGO_URI: mongodb://mongo:27017/votecloud
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - votecloud-merkle:/app/backend/src/config/merkle-trees
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:7
+    container_name: votecloud-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - votecloud-mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: votecloud-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - votecloud-redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  votecloud-mongo:
+  votecloud-redis:
+  votecloud-merkle:
