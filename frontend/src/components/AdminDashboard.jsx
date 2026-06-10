@@ -55,7 +55,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       await addAdmin(adminAddress);
-      toast.success("Admin added on-chain");
+      toast.success("Admin added");
       setAdminAddress("");
     } catch (err) {
       toast.error(err.response?.data?.error || "Could not add admin");
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       await removeAdmin(adminAddress);
-      toast.success("Admin removed on-chain");
+      toast.success("Admin removed");
       setAdminAddress("");
     } catch (err) {
       toast.error(err.response?.data?.error || "Could not remove admin");
@@ -118,7 +118,7 @@ export default function AdminDashboard() {
           </div>
           <div className="alert alert-warning" style={{ marginBottom: "1rem" }}>
             <Clock size={16} style={{ flexShrink: 0 }} />
-            <span>Votes are counted immediately on-chain as they are cast.</span>
+            <span>Votes are counted immediately as they are cast.</span>
           </div>
           <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
             <button className="btn btn-primary" disabled={loading || results?.isOpen} onClick={handleStartVoting}>
@@ -149,7 +149,7 @@ export default function AdminDashboard() {
 
       <div className="card">
         <div className="card-title">
-          <Shield size={18} className="icon" /> Governance (On-chain Admins)
+          <Shield size={18} className="icon" /> Governance
         </div>
         <div className="form-group">
           <label className="form-label">Admin Address</label>

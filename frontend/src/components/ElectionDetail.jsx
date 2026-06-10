@@ -18,8 +18,6 @@ import { archiveElection, deployElection, endVoting, getElection, sendInvitation
 import contractsConfig from "../config/contracts.json";
 import { participation, StatusBadge } from "./OrganizationDashboard";
 
-const IS_DEMO_MODE = process.env.REACT_APP_LOCAL_MODE === "true" || contractsConfig?.LOCALMode === true;
-
 export default function ElectionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -124,7 +122,7 @@ export default function ElectionDetail() {
           <div className="status-stack">
             <div className="status-row">
               <span>Contract</span>
-              <strong>{election.contractAddress ? shorten(election.contractAddress) : IS_DEMO_MODE ? "Demo mode" : "Not deployed"}</strong>
+              <strong>{election.contractAddress ? shorten(election.contractAddress) : "Managed"}</strong>
             </div>
             <div className="status-row">
               <span>Factory election ID</span>
@@ -135,11 +133,6 @@ export default function ElectionDetail() {
               <strong>{election.merkleRoot ? shorten(election.merkleRoot) : "Pending"}</strong>
             </div>
           </div>
-          {IS_DEMO_MODE && (
-            <div className="alert alert-warning detail-action">
-              Blockchain deployment is disabled for this demo. Votes are recorded locally by the backend.
-            </div>
-          )}
           {explorer && (
             <a className="btn btn-secondary btn-full detail-action" href={explorer} target="_blank" rel="noreferrer">
               Open explorer

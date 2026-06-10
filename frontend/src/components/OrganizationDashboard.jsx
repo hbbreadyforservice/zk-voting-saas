@@ -3,9 +3,6 @@ import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 import { BarChart3, CalendarClock, Plus, RefreshCw, Users, Vote } from "lucide-react";
 import { listElections } from "../services/api";
-import contractsConfig from "../config/contracts.json";
-
-const IS_DEMO_MODE = process.env.REACT_APP_LOCAL_MODE === "true" || contractsConfig?.LOCALMode === true;
 
 const STATUS_LABELS = {
   draft: "Pending",
@@ -71,12 +68,6 @@ export default function OrganizationDashboard({ organization }) {
         <Metric icon={<BarChart3 size={18} />} label="Votes cast" value={stats.totalVotes} />
       </div>
 
-      {IS_DEMO_MODE && (
-        <div className="alert alert-warning">
-          Demo mode is enabled. Votes are recorded in the VoteCloud backend for this demo.
-        </div>
-      )}
-
       <section className="card">
         <div className="card-title">
           <Vote size={18} className="icon" /> Elections
@@ -99,7 +90,7 @@ export default function OrganizationDashboard({ organization }) {
                   <th>Status</th>
                   <th>Participation</th>
                   <th>Voters</th>
-                  <th>Mode</th>
+                  <th>Record</th>
                   <th></th>
                 </tr>
               </thead>
@@ -122,7 +113,7 @@ export default function OrganizationDashboard({ organization }) {
                       </div>
                     </td>
                     <td>{election.voterCount || 0}</td>
-                    <td>{election.contractAddress ? shorten(election.contractAddress) : IS_DEMO_MODE ? "Demo" : "Not deployed"}</td>
+                    <td>{election.contractAddress ? shorten(election.contractAddress) : "Managed"}</td>
                     <td>
                       <Link className="btn btn-secondary" to={`/dashboard/elections/${election._id}`}>
                         Open

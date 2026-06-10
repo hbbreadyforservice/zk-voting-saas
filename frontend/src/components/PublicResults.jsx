@@ -72,7 +72,6 @@ export default function PublicResults() {
           <div>
             <h1>Election Results</h1>
             <p>{data?.electionName}</p>
-            {data?.localMode && <span className="badge badge-warning">Demo mode</span>}
           </div>
           <button className="btn btn-secondary" onClick={load}>
             <RefreshCw size={14} /> Refresh

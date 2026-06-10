@@ -74,7 +74,7 @@ export default function VoterDashboard() {
     setMerkleRoot(voter.merkleRoot);
     setPathElements(voter.pathElements || []);
     setPathIndices(voter.pathIndices || []);
-    toast.success(`Loaded LOCAL voter ${voter.email}`);
+    toast.success(`Loaded voter ${voter.email}`);
   }
 
   const handleCredentialsSubmit = useCallback(async () => {
@@ -106,7 +106,7 @@ export default function VoterDashboard() {
       } catch (err) {
         return toast.error(
           err?.response?.data?.error ||
-            "Could not auto-load credentials. Use a LOCAL prefill button or fill advanced fields."
+            "Could not auto-load credentials. Use a prefill button or fill advanced fields."
         );
       }
     }
@@ -206,7 +206,7 @@ export default function VoterDashboard() {
             <CheckCircle2 size={18} className="icon" /> Vote Submitted
           </div>
           <p style={{ color: "var(--text-muted)", marginBottom: "1rem" }}>
-            Your vote is recorded and counted on-chain immediately.
+            Your vote is recorded and counted immediately.
           </p>
           <div className="status-stack">
             <div className="status-row">
@@ -284,7 +284,7 @@ export default function VoterDashboard() {
 
           {LOCALVoters.length > 0 && (
             <div className="alert alert-warning" style={{ display: "block" }}>
-              <div style={{ marginBottom: "0.75rem" }}>LOCAL mode quick prefill:</div>
+              <div style={{ marginBottom: "0.75rem" }}>Quick voter access:</div>
               <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
                 {LOCALVoters.map((voter) => (
                   <button key={voter.email} type="button" className="btn btn-secondary" onClick={() => loadLOCALVoter(voter)}>
@@ -428,7 +428,7 @@ export default function VoterDashboard() {
           <div className="alert alert-info">
             <Lock size={16} style={{ flexShrink: 0 }} />
             <span>
-              Proof generation is local. The transaction includes your selected candidate index for live tally.
+              Proof generation runs in your browser. The submission includes your selected candidate index for live tally.
             </span>
           </div>
 
