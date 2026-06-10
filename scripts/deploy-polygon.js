@@ -32,6 +32,35 @@ function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
 
+function isValidPrivateKey(value) {
+  if (!value) return false;
+  const trimmed = value.trim();
+  const normalized = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+  return /^0x[0-9a-fA-F]{64}$/.test(normalized);
+}
+
+function isConfiguredValue(value) {
+  return Boolean(value) && !/your_|changeme|placeholder|xxxx|todo/i.test(value);
+}
+
+function assertDeploymentEnvironment() {
+  const hasPrivateKey = isValidPrivateKey(process.env.PRIVATE_KEY) || isValidPrivateKey(process.env.ADMIN_PRIVATE_KEY);
+  if (!hasPrivateKey) {
+    throw new Error(
+      "No valid deployer private key configured. Set PRIVATE_KEY or ADMIN_PRIVATE_KEY to a 32-byte hex private key before deploying."
+    );
+  }
+
+  const requiredRpcByNetwork = {
+    polygonAmoy: process.env.POLYGON_AMOY_RPC_URL || process.env.AMOY_RPC_URL,
+    polygon: process.env.POLYGON_MAINNET_RPC_URL || process.env.POLYGON_RPC_URL,
+  };
+  const rpcUrl = requiredRpcByNetwork[hre.network.name];
+  if (!isConfiguredValue(rpcUrl)) {
+    throw new Error(`No valid RPC URL configured for ${hre.network.name}. Fill the matching RPC URL in .env before deploying.`);
+  }
+}
+
 async function verifyContract(address, constructorArguments, label) {
   const hasApiKey = Boolean(process.env.POLYGONSCAN_API_KEY || process.env.ETHERSCAN_API_KEY);
   if (!hasApiKey) {
@@ -58,6 +87,7 @@ async function verifyContract(address, constructorArguments, label) {
 
 async function main() {
   assertProductionVerifierExists();
+  assertDeploymentEnvironment();
 
   const [deployer] = await ethers.getSigners();
   const network = await ethers.provider.getNetwork();

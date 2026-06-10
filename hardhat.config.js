@@ -1,7 +1,15 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
-const deployerPrivateKey = process.env.PRIVATE_KEY || process.env.ADMIN_PRIVATE_KEY;
+function normalizePrivateKey(value) {
+  if (!value) return null;
+  const trimmed = value.trim();
+  const normalized = trimmed.startsWith("0x") ? trimmed : `0x${trimmed}`;
+  return /^0x[0-9a-fA-F]{64}$/.test(normalized) ? normalized : null;
+}
+
+const deployerPrivateKey =
+  normalizePrivateKey(process.env.PRIVATE_KEY) || normalizePrivateKey(process.env.ADMIN_PRIVATE_KEY);
 const deployerAccounts = deployerPrivateKey ? [deployerPrivateKey] : [];
 const polygonscanApiKey = process.env.POLYGONSCAN_API_KEY || process.env.ETHERSCAN_API_KEY || "";
 
