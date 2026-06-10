@@ -117,7 +117,7 @@ export default function InviteVotePage() {
         <div className="card-title">
           <ShieldCheck size={18} className="icon" /> {election.title}
         </div>
-          <p className="muted-text">{election.description || "Private VoteCloud election"}</p>
+          <p className="muted-text">{election.description || "Private ZK Voting election"}</p>
         <div className="status-stack detail-status">
           <div className="status-row">
             <span>Voter</span>
@@ -150,7 +150,7 @@ export default function InviteVotePage() {
           ))}
         </div>
         <div className="alert alert-info detail-action">
-          VoteCloud prepares your private proof in this browser. Your private voting credentials are never shown or shared.
+          ZK Voting prepares your private proof in this browser. Your private voting credentials are never shown or shared.
         </div>
         <button className="btn btn-primary btn-lg btn-full" disabled={submitting || selectedCandidate === null} onClick={submitSecureVote}>
           {submitting ? (

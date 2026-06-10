@@ -10,7 +10,7 @@ function getEmailConfig() {
     secure: process.env.SMTP_SECURE === "true",
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
-    from: process.env.EMAIL_FROM || "VoteCloud <no-reply@votecloud.local>",
+    from: process.env.EMAIL_FROM || "ZK Voting <no-reply@zk-voting.local>",
     appUrl: process.env.FRONTEND_URL || "http://localhost:3000",
   };
 }
@@ -119,14 +119,14 @@ function invitationTemplate({ election, organization, voteUrl }) {
     title: "You are invited to vote",
     preheader: `${organization?.name || "An organization"} invited you to participate in ${election.title}.`,
     body: `
-      <p>${escapeHtml(organization?.name || "An organization")} invited you to participate in a secure VoteCloud election.</p>
+      <p>${escapeHtml(organization?.name || "An organization")} invited you to participate in a secure ZK Voting election.</p>
       <div class="panel">
         <strong>${escapeHtml(election.title)}</strong>
         <p>${escapeHtml(election.description || "Secure online election")}</p>
         <p><b>Start:</b> ${escapeHtml(formatDate(election.startDate))}</p>
         <p><b>End:</b> ${escapeHtml(formatDate(election.endDate))}</p>
       </div>
-      <p>Your browser will generate your private voting secret locally. VoteCloud will only receive a cryptographic commitment.</p>
+      <p>Your browser will generate your private voting secret locally. ZK Voting will only receive a cryptographic commitment.</p>
       <a class="button" href="${escapeAttr(voteUrl)}">Vote now</a>
     `,
   });
@@ -187,11 +187,11 @@ function layout({ title, preheader, body }) {
     <span class="preheader">${escapeHtml(preheader || "")}</span>
     <div class="wrap">
       <div class="card">
-        <div class="brand">VoteCloud</div>
+        <div class="brand">ZK Voting</div>
         <h1>${escapeHtml(title)}</h1>
         ${body}
       </div>
-      <div class="footer">VoteCloud secure election platform</div>
+      <div class="footer">ZK Voting secure election platform</div>
     </div>
   </body>
 </html>`;

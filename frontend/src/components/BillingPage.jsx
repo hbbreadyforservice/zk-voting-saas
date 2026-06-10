@@ -76,7 +76,7 @@ export default function BillingPage() {
       <div className="page-header split-header">
         <div>
           <h1>Billing</h1>
-          <p>Manage your VoteCloud subscription, quotas, and billing portal.</p>
+          <p>Manage your ZK Voting subscription, quotas, and billing portal.</p>
         </div>
         <div className="header-actions">
           <button className="btn btn-secondary" onClick={load}>

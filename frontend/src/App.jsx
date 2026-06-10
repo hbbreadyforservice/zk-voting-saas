@@ -41,7 +41,7 @@ function NavBar({ organization, onLogout, theme, onToggleTheme }) {
         <ShieldCheck size={24} className="brand-icon" />
         <div>
           <div className="brand-text">
-            Vote<span className="brand-accent">Cloud</span>
+            ZK<span className="brand-accent"> Voting</span>
           </div>
           <div className="brand-subtitle">secure election workspace</div>
         </div>
@@ -85,7 +85,7 @@ function HeroStrip({ organization }) {
     "/dashboard/elections/new": {
       kicker: "Election Builder",
       title: "Create a new election and import eligible voters.",
-      description: "Define candidates, dates, and voter lists. VoteCloud prepares secure invitation links for each voter.",
+      description: "Define candidates, dates, and voter lists. ZK Voting prepares secure invitation links for each voter.",
       points: ["Candidate setup", "CSV import", "Secure invitations"],
     },
     "/dashboard/billing": {
@@ -225,7 +225,7 @@ function AppShell() {
       </main>
       {!isVoterInvite && !isPublicResults && (
         <footer className="footer">
-          <span>VoteCloud secure election workspace</span>
+          <span>ZK Voting secure election workspace</span>
           <span>Private voter flow with verifiable receipts</span>
         </footer>
       )}

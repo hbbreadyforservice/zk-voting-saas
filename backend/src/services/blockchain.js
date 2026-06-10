@@ -80,7 +80,7 @@ function getFactoryContract() {
   const abiPath = path.join(__dirname, "../config/abi/VoteCloudFactory.json");
 
   if (!fs.existsSync(configPath) || !fs.existsSync(abiPath)) {
-    throw new Error("Factory config not found. Run the VoteCloud factory deployment first.");
+    throw new Error("Factory config not found. Run the ZK Voting factory deployment first.");
   }
 
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));

@@ -176,7 +176,7 @@ export default function NewElection() {
                 checked={form.deployOnChain}
                 onChange={(e) => setForm({ ...form, deployOnChain: e.target.checked })}
               />
-              <span>Deploy election contract immediately through VoteCloudFactory</span>
+              <span>Deploy election contract immediately</span>
             </label>
           )}
         </section>

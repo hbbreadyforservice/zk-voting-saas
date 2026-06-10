@@ -113,7 +113,7 @@ function AuthShell({ icon, title, subtitle, children }) {
       </section>
       <aside className="auth-side">
         <Building2 size={26} className="icon" />
-        <h2>VoteCloud</h2>
+        <h2>ZK Voting</h2>
         <p>Run private online elections with invite-only voting, live participation, and verifiable voter receipts.</p>
       </aside>
     </div>

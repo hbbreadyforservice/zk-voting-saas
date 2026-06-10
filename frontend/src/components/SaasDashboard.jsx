@@ -48,7 +48,7 @@ export default function SaasDashboard() {
       <div className="saas-hero">
         <div>
           <span className="hero-kicker">SaaS Platform</span>
-          <h1>ZKVote Cloud for secure online elections</h1>
+          <h1>ZK Voting for secure online elections</h1>
           <p>
             A subscription-based platform where organizations can create elections,
             manage voters, run secure voting sessions, and publish verifiable results.

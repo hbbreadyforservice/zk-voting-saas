@@ -1,5 +1,5 @@
 /**
- * app.js - VoteCloud Backend
+ * app.js - ZK Voting Backend
  * REST API bridging React, MongoDB, Stripe, email, and Ethereum contracts.
  *
  * ZK privacy rule: proofs are generated in the browser. The backend receives
@@ -99,7 +99,7 @@ async function start() {
   }
 
   app.listen(PORT, () => {
-    logger.info(`VoteCloud API running on http://localhost:${PORT}`);
+    logger.info(`ZK Voting API running on http://localhost:${PORT}`);
   });
 
   startReminderJob();
