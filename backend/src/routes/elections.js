@@ -3,6 +3,14 @@ const { body, param, validationResult } = require("express-validator");
 const fs = require("fs");
 const path = require("path");
 
+/**
+ * routes/elections.js
+ * -------------------
+ * Espace organisation: creation, modification et deploiement des elections.
+ * Ce fichier gere les donnees SaaS dans MongoDB, puis appelle blockchain.js
+ * seulement quand une election doit exister sur la blockchain.
+ */
+
 const Election = require("../models/Election");
 const Organization = require("../models/Organization");
 const AuditLog = require("../models/AuditLog");
@@ -104,6 +112,8 @@ router.post(
     try {
       if (!handleValidation(req, res)) return;
 
+      // Les donnees venant du formulaire React sont nettoyees avant stockage:
+      // candidats normalises, emails dedupliques, dates converties.
       const candidates = normalizeCandidates(req.body.candidates);
       const voterEmails = normalizeVoterEmails(req.body.voterEmails);
       const startDate = req.body.startDate ? new Date(req.body.startDate) : null;
@@ -125,6 +135,9 @@ router.post(
 
       await Organization.updateOne({ _id: req.orgId }, { $addToSet: { elections: election._id } });
 
+      // Les electeurs importes sont seulement pre-enregistres ici.
+      // Leur commitment ZK est cree plus tard, dans le navigateur, au moment
+      // ou ils ouvrent leur invitation.
       if (voterEmails.length > 0) {
         await Voter.insertMany(
           voterEmails.map((email) => ({
@@ -147,6 +160,8 @@ router.post(
         metadata: { title: election.title, importedVoters: voterEmails.length },
       }).catch(() => null);
 
+      // Optionnel: certaines elections restent en mode SaaS local, d'autres
+      // sont deployees immediatement via la factory Solidity.
       if (req.body.deployOnChain === true) {
         const config = getContractsConfig();
         if (!config.factoryAddress) {
@@ -264,6 +279,9 @@ router.post(
 );
 
 async function deployElection(election, req) {
+  // Deploiement on-chain: une election MongoDB correspond a un contrat ZKVoting.
+  // L'adresse retournee devient la reference pour ouvrir/fermer le vote et
+  // soumettre les preuves.
   const candidates = election.candidates.map((candidate) => candidate.name);
   const chainResult = await createElectionOnChain(election.title, candidates, getDurationSecs(election));
   const config = getContractsConfig();

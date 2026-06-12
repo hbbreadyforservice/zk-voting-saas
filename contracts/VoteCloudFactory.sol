@@ -6,6 +6,9 @@ import "./ZKVoting.sol";
 /**
  * @title VoteCloudFactory
  * @notice Deploys one ZKVoting contract per organization election.
+ *
+ * The SaaS backend calls this contract when an organization deploys an election.
+ * Each election receives its own ZKVoting contract and address.
  */
 contract VoteCloudFactory {
     struct ElectionRecord {
@@ -54,6 +57,9 @@ contract VoteCloudFactory {
 
         electionId = nextElectionId++;
 
+        // The caller becomes the primary admin of the new election contract.
+        // The verifier address is shared, but the Merkle root and tallies are
+        // isolated per deployed ZKVoting instance.
         ZKVoting election = new ZKVoting(
             verifier,
             msg.sender,

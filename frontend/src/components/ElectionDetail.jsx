@@ -18,6 +18,11 @@ import { archiveElection, deployElection, endVoting, getElection, sendInvitation
 import contractsConfig from "../config/contracts.json";
 import { participation, StatusBadge } from "./OrganizationDashboard";
 
+/**
+ * Tableau de pilotage d'une election.
+ * Depuis cet ecran, l'organisation deploie le contrat, ouvre/ferme le vote
+ * et genere les liens d'invitation envoyes aux electeurs.
+ */
 export default function ElectionDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -44,6 +49,8 @@ export default function ElectionDetail() {
   }, [id]);
 
   async function runAction(action, success) {
+    // Toutes les actions sensibles passent par l'API backend authentifiee.
+    // Le frontend ne signe jamais directement de transaction admin.
     setActionLoading(true);
     try {
       await action();
@@ -180,6 +187,8 @@ export default function ElectionDetail() {
                   return;
                 }
                 const data = await sendInvitations(election._id);
+                // En dev, les liens sont affiches pour test. En production,
+                // email.js peut les envoyer directement aux electeurs.
                 setInvitationLinks(data.invitationLinks || []);
                 setInvitationSummary({
                   count: data.count || 0,

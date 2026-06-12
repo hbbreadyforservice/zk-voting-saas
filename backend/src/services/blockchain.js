@@ -2,6 +2,10 @@
  * blockchain.js
  * =============
  * Ethers.js interface to the ZKVoting smart contract.
+ *
+ * Ce service isole toutes les interactions Ethereum du reste du backend:
+ * les routes appellent des fonctions metier, et ce fichier signe/envoie les
+ * transactions avec le wallet admin configure.
  */
 
 const { ethers } = require("ethers");
@@ -23,6 +27,8 @@ function getProvider() {
 
 function getAdminWallet() {
   if (!adminWallet) {
+    // Le backend agit comme relayer: l'electeur n'a pas besoin d'ETH.
+    // La cle admin doit donc etre protegee en production.
     const wallet = new ethers.Wallet(
       process.env.ADMIN_PRIVATE_KEY ||
         "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
@@ -96,6 +102,8 @@ function getFactoryContract() {
 }
 
 async function createElectionOnChain(electionName, candidates, durationSecs) {
+  // La factory deploie un nouveau contrat ZKVoting par election.
+  // L'evenement ElectionCreated donne l'adresse a sauvegarder dans MongoDB.
   const factory = getFactoryContract();
   const tx = await factory.createElection(electionName, candidates, durationSecs);
   const receipt = await tx.wait();
@@ -125,6 +133,8 @@ async function createElectionOnChain(electionName, candidates, durationSecs) {
 }
 
 async function submitVoteOnChain(pA, pB, pC, nullifierHash, voteChoice, contractAddress) {
+  // Point final du flow de vote: on transmet la preuve Groth16 et les signaux
+  // publics au contrat, qui verifie puis incremente le tally.
   const contract = contractAddress ? getVotingContract(contractAddress) : getContracts().votingContract;
 
   const tx = await contract.castVote(pA, pB, pC, nullifierHash, voteChoice);
@@ -134,6 +144,8 @@ async function submitVoteOnChain(pA, pB, pC, nullifierHash, voteChoice, contract
 }
 
 async function updateMerkleRootOnChain(newRoot, contractAddress) {
+  // Synchronise le registre off-chain des electeurs avec le contrat.
+  // Une preuve basee sur une autre racine sera rejetee.
   const contract = contractAddress ? getVotingContract(contractAddress) : getContracts().votingContract;
   const tx = await contract.updateMerkleRoot(BigInt(newRoot));
   await tx.wait();

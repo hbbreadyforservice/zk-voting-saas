@@ -2,6 +2,10 @@
  * routes/admin.js
  * ===============
  * Admin endpoints.
+ *
+ * Ces routes sont appelees par l'espace organisation pour piloter une election:
+ * publier la racine Merkle, ouvrir/fermer le vote, lire les resultats et
+ * generer les invitations des electeurs.
  */
 
 const router = require("express").Router();
@@ -63,6 +67,8 @@ router.use(assertElectionOwnership);
 
 router.post("/update-root", async (req, res, next) => {
   try {
+    // La racine Merkle resume la liste des commitments autorises.
+    // Elle doit etre synchronisee avec le contrat avant le vote.
     const tree = await getTree(req.election?._id?.toString());
     const newRoot = tree.getRoot();
 
@@ -98,6 +104,8 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
+      // Ouvrir le vote change l'etat du contrat et de MongoDB.
+      // Le contrat impose ensuite la periode et refuse les votes hors delai.
       const durationSecs = req.body.durationHours * 3600;
       let txHash = null;
       if (req.election?.contractAddress || !isLOCALMode()) {
@@ -241,6 +249,9 @@ router.post("/send-invitations/:electionId", assertElectionOwnership, async (req
     const organization = await Organization.findById(req.orgId).select("name email");
 
     for (const voter of voters) {
+      // Chaque lien contient un JWT lie a un electeur et a une election.
+      // Le hash du token est stocke pour pouvoir verifier le lien sans garder
+      // le token en clair en base de donnees.
       const token = jwt.sign(
         {
           type: "voter_invite",

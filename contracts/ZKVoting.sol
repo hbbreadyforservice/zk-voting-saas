@@ -201,6 +201,8 @@ contract ZKVoting {
         if (votingOpen) revert VotingAlreadyOpen();
         if (_newRoot == 0) revert InvalidMerkleRoot();
 
+        // La racine Merkle represente la liste des electeurs autorises.
+        // Elle est verrouillee pendant le vote pour eviter de changer le corps electoral.
         uint256 old = merkleRoot;
         merkleRoot = _newRoot;
 
@@ -213,6 +215,8 @@ contract ZKVoting {
         if (merkleRoot == 0) revert InvalidMerkleRoot();
         if (_durationSecs == 0) revert InvalidDuration();
 
+        // Le vote ne peut commencer qu'apres publication d'une racine Merkle.
+        // Ainsi, chaque preuve verifiee correspond a un electeur inscrit.
         votingOpen = true;
         startTime = block.timestamp;
         endTime = block.timestamp + _durationSecs;
@@ -247,10 +251,14 @@ contract ZKVoting {
         if (nullifierSpent[nullifierHash]) revert NullifierAlreadySpent();
         if (voteChoice >= candidates.length) revert InvalidCandidate();
 
+        // Ces signaux publics doivent correspondre au circuit:
+        // merkleRoot prouve l'eligibilite, nullifierHash bloque le double vote,
+        // voteChoice indique le candidat a incrementer.
         uint256[3] memory publicSignals = [merkleRoot, nullifierHash, voteChoice];
         bool valid = verifier.verifyProof(pA, pB, pC, publicSignals);
         if (!valid) revert InvalidProof();
 
+        // Effets apres verification: le nullifier est consomme avant le tally.
         nullifierSpent[nullifierHash] = true;
         voteTally[voteChoice]++;
         totalVotes++;

@@ -2,6 +2,10 @@
  * zkProof.js
  * ==========
  * Groth16 proof generation / verification for the voting circuit.
+ *
+ * En production, la preuve est generee cote frontend. Ce service backend
+ * sert surtout a verifier une preuve recue et a la convertir au format attendu
+ * par le verifier Solidity.
  */
 
 const snarkjs = require("snarkjs");
@@ -32,6 +36,8 @@ function isLOCALMode() {
 
 function getVerificationKey() {
   if (!cachedVKey) {
+    // La verification key est l'artefact public issu de la ceremony Groth16.
+    // Elle permet de verifier une preuve sans connaitre les entrees privees.
     if (!fs.existsSync(VKEY_PATH)) {
       throw new Error("Verification key not found. Run circuits/setup.sh first.");
     }
@@ -51,6 +57,8 @@ async function generateProof(input) {
   logger.info("Generating zk-SNARK proof...");
   const startTime = Date.now();
 
+  // Les signaux publics seront visibles par le contrat.
+  // Les secrets, nullifier brut et chemin Merkle restent des entrees privees.
   const circuitInput = {
     merkleRoot: input.merkleRoot.toString(),
     nullifierHash: input.nullifierHash.toString(),
@@ -74,6 +82,8 @@ async function verifyProofOffChain(proof, publicSignals) {
   }
 
   const vKey = getVerificationKey();
+  // Verification rapide avant d'envoyer la transaction blockchain.
+  // Le smart contract refera une verification cryptographique on-chain.
   return snarkjs.groth16.verify(vKey, publicSignals, proof);
 }
 
@@ -87,6 +97,8 @@ async function proofToCalldata(proof, publicSignals) {
     };
   }
 
+  // snarkjs produit une chaine Solidity; on la parse pour obtenir les tableaux
+  // pA, pB, pC que ZKVoting.castVote attend.
   const calldata = await snarkjs.groth16.exportSolidityCallData(proof, publicSignals);
   const parsed = JSON.parse("[" + calldata + "]");
 

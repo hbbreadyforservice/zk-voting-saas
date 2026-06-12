@@ -1,5 +1,9 @@
 ﻿/**
  * services/zkProof.js (frontend)
+ *
+ * Ce fichier est central pour la confidentialite:
+ * les secrets de l'electeur, le nullifier et la generation Groth16 restent
+ * dans le navigateur. Le backend recoit seulement proof + publicSignals.
  */
 
 import * as snarkjs from "snarkjs";
@@ -17,10 +21,13 @@ async function poseidonHash(inputs) {
 }
 
 export async function computeCommitment(secret, nullifier) {
+  // Commitment public envoye au backend pour inscrire l'electeur dans l'arbre.
+  // Il ne permet pas de retrouver secret ou nullifier.
   return (await poseidonHash([BigInt(secret), BigInt(nullifier)])).toString();
 }
 
 export async function computeNullifierHash(nullifier) {
+  // Identifiant public anti double-vote. Le nullifier brut reste prive.
   return (await poseidonHash([BigInt(nullifier)])).toString();
 }
 
@@ -33,6 +40,8 @@ export async function generateVoteProof({
   merkleRoot,
 }) {
   const nullifierHash = await computeNullifierHash(nullifier);
+  // Ces trois valeurs sont publiques et doivent correspondre exactement a ce
+  // que le contrat verifie: racine Merkle, nullifierHash, candidat choisi.
   const publicSignals = [merkleRoot.toString(), nullifierHash.toString(), voteChoice.toString()];
 
   if (LOCAL_MODE) {
@@ -47,6 +56,8 @@ export async function generateVoteProof({
     return { proof, publicSignals, nullifierHash, voteChoice: voteChoice.toString(), calldata };
   }
 
+  // Entrees privees du circuit: elles prouvent l'eligibilite sans etre
+  // transmises au backend ni a la blockchain.
   const circuitInput = {
     merkleRoot: merkleRoot.toString(),
     nullifierHash: nullifierHash.toString(),

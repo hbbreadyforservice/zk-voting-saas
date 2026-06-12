@@ -35,6 +35,9 @@ template MerkleTreeChecker(levels) {
     levelHashes[0] <== leaf;
 
     for (var i = 0; i < levels; i++) {
+        // pathIndices[i] choisit l'ordre de hash:
+        // 0 = le noeud courant est a gauche, 1 = il est a droite.
+        // Cela reconstruit progressivement la racine Merkle.
         mux[i] = MultiMux1(2);
 
         mux[i].c[0][0] <== levelHashes[i];
@@ -68,6 +71,9 @@ template VoteCircuit(levels) {
     signal input pathIndices[levels];
 
     // 1) Identity commitment and Merkle membership
+    // L'electeur connait secret et nullifier. Le circuit reconstruit le
+    // commitment Poseidon(secret, nullifier), puis verifie qu'il appartient
+    // a l'arbre public merkleRoot.
     component identityCommitment = Poseidon(2);
     identityCommitment.inputs[0] <== secret;
     identityCommitment.inputs[1] <== nullifier;
@@ -82,10 +88,15 @@ template VoteCircuit(levels) {
     }
 
     // 2) nullifierHash = Poseidon(nullifier)
+    // Le nullifierHash est public pour empecher un second vote.
+    // Le nullifier brut reste prive, donc on ne peut pas relier le vote a
+    // l'identite de l'electeur.
     component nullifierHasher = Poseidon(1);
     nullifierHasher.inputs[0] <== nullifier;
     nullifierHash === nullifierHasher.out;
 
 }
 
+// Les signaux publics sont exactement ceux controles par ZKVoting.castVote.
+// voteChoice est public pour permettre un tally en direct.
 component main {public [merkleRoot, nullifierHash, voteChoice]} = VoteCircuit(10);

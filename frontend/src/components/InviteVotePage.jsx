@@ -5,6 +5,11 @@ import { CheckCircle2, ShieldCheck, Vote } from "lucide-react";
 import { castInviteVote, claimVoteInvite, getVoteInvite } from "../services/api";
 import { computeCommitment, generateVoteProof } from "../services/zkProof";
 
+/**
+ * Page ouverte par le lien d'invitation.
+ * Le flow complet reste cote navigateur jusqu'a la soumission finale:
+ * creation secret/nullifier -> commitment -> preuve ZK -> envoi proof/publicSignals.
+ */
 export default function InviteVotePage() {
   const { electionId, token } = useParams();
   const [loading, setLoading] = useState(true);
@@ -39,13 +44,19 @@ export default function InviteVotePage() {
     setSubmitting(true);
     try {
       setStatusText("Generating private voting credentials...");
+      // Secrets jetables generes localement. Ils ne sont jamais affiches ni
+      // envoyes au backend; seul le commitment derive est transmis.
       const credentials = createCredentials();
       const commitment = await computeCommitment(credentials.secret, credentials.nullifier);
 
       setStatusText("Preparing your private voting session...");
+      // Claim = ajout du commitment a l'arbre Merkle et recuperation du chemin
+      // Merkle necessaire a la preuve.
       const claim = await claimVoteInvite(electionId, token, commitment);
 
       setStatusText("Generating a private proof in this browser...");
+      // La preuve ZK montre que l'electeur est dans l'arbre sans reveler son
+      // secret, son nullifier brut ni sa position complete.
       const generatedProof = await generateVoteProof({
         secret: credentials.secret,
         nullifier: credentials.nullifier,
@@ -56,6 +67,8 @@ export default function InviteVotePage() {
       });
 
       setStatusText("Submitting secure vote...");
+      // Le backend relaie proof + publicSignals au smart contract.
+      // Le contrat verifie la preuve et bloque le double vote via nullifierHash.
       const data = await castInviteVote(
         electionId,
         token,

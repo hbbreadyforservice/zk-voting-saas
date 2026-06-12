@@ -4,6 +4,16 @@ const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const { body, validationResult } = require("express-validator");
 
+/**
+ * routes/vote.js
+ * --------------
+ * Parcours public d'un electeur invite:
+ * 1. verification du lien d'invitation JWT
+ * 2. enregistrement du commitment dans l'arbre Merkle de l'election
+ * 3. reception d'une preuve zk-SNARK generee cote navigateur
+ * 4. relais de la transaction vers le smart contract ZKVoting
+ */
+
 const Election = require("../models/Election");
 const Voter = require("../models/Voter");
 const AuditLog = require("../models/AuditLog");
@@ -47,6 +57,8 @@ async function loadInvite(req, res, next) {
       return res.status(400).json({ error: "Invalid electionId" });
     }
 
+    // Le token prouve que l'electeur vient bien du lien envoye par
+    // l'organisation, sans exposer de mot de passe electeur.
     const payload = jwt.verify(token, getVoterInviteSecret());
     if (
       payload.type !== "voter_invite" ||
@@ -121,6 +133,8 @@ router.post(
       const tree = await getTree(election._id.toString());
 
       if (!voter.registered) {
+        // L'electeur envoie seulement son commitment public.
+        // Le secret et le nullifier restent dans son navigateur.
         const leafIndex = tree.insert(commitment);
         const proof = tree.getMerkleProof(leafIndex);
         const merkleRoot = tree.getRoot();
@@ -140,6 +154,8 @@ router.post(
         let rootTxHash = null;
         if (election.contractAddress) {
           try {
+            // Apres ajout d'un electeur, la racine Merkle doit etre publiee
+            // sur le contrat pour que les futures preuves soient acceptees.
             rootTxHash = await updateMerkleRootOnChain(merkleRoot, election.contractAddress);
           } catch (err) {
             rootTxHash = null;
@@ -199,6 +215,9 @@ router.post(
       const election = req.election;
       const voter = req.voter;
 
+      // Verifications metier avant d'envoyer la transaction: invitation
+      // reclamee, vote pas encore utilise, candidat valide, signaux publics
+      // coherents avec la preuve.
       if (!voter.registered || voter.inviteStatus === "pending") {
         return res.status(409).json({ error: "Invitation must be claimed before voting" });
       }
@@ -217,6 +236,8 @@ router.post(
       }
 
       if (isLOCALMode() && !election.contractAddress) {
+        // Mode demo: on garde le meme flow applicatif, mais sans transaction
+        // blockchain reelle. Pratique pour tester l'interface et MongoDB.
         const valid = await verifyProofOffChain(proof, publicSignals);
         if (!valid) return res.status(400).json({ error: "Invalid zk-SNARK proof" });
 
@@ -254,11 +275,16 @@ router.post(
         });
       }
 
+      // Verification de securite: la preuve doit viser la meme racine Merkle
+      // que celle stockee on-chain, sinon un electeur pourrait prouver contre
+      // un ancien registre.
       const onChainRoot = await getMerkleRootForContract(election.contractAddress).catch(() => null);
       if (onChainRoot && String(publicSignals[0]) !== String(onChainRoot)) {
         return res.status(400).json({ error: "On-chain Merkle root mismatch" });
       }
 
+      // Double verification: d'abord off-chain pour eviter une transaction
+      // inutile, puis on-chain dans ZKVoting.castVote.
       const valid = await verifyProofOffChain(proof, publicSignals);
       if (!valid) return res.status(400).json({ error: "Invalid zk-SNARK proof" });
 

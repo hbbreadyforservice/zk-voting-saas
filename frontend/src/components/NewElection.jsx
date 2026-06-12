@@ -5,6 +5,12 @@ import { ArrowLeft, Plus, Trash2, Upload, Vote } from "lucide-react";
 import { createElection } from "../services/api";
 import contractsConfig from "../config/contracts.json";
 
+/**
+ * Formulaire de creation d'election cote organisation.
+ * Il prepare les donnees metier: titre, candidats, dates et emails electeurs.
+ * Les commitments ZK ne sont pas crees ici: ils sont generes plus tard par
+ * chaque electeur dans son navigateur.
+ */
 export default function NewElection() {
   const navigate = useNavigate();
   const canDeployOnChain = Boolean(contractsConfig?.factoryAddress);
@@ -37,6 +43,8 @@ export default function NewElection() {
   }
 
   async function readCsv(file) {
+    // Import simple: le CSV sert uniquement a creer la liste des emails
+    // eligibles. Aucun secret electeur n'est importe par l'administrateur.
     const text = await file.text();
     const emails = text
       .split(/\r?\n|,|;/)
@@ -55,6 +63,8 @@ export default function NewElection() {
     setLoading(true);
     try {
       const data = await createElection({
+        // L'API backend cree l'election MongoDB, pre-enregistre les electeurs
+        // et peut deployer le contrat si deployOnChain est active.
         title: form.title,
         description: form.description,
         startDate: form.startDate || undefined,
