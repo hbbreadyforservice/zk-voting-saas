@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { CheckCircle2, Cpu, Key, Send, ShieldCheck, Vote } from "lucide-react";
 import { castInviteVote, claimVoteInvite, getVoteInvite } from "../services/api";
@@ -12,6 +12,7 @@ import { computeCommitment, generateVoteProof } from "../services/zkProof";
  */
 export default function InviteVotePage() {
   const { electionId, token } = useParams();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [credentialLoading, setCredentialLoading] = useState(false);
   const [proofLoading, setProofLoading] = useState(false);
@@ -30,6 +31,10 @@ export default function InviteVotePage() {
       setLoading(true);
       try {
         const data = await getVoteInvite(electionId, token);
+        if (data?.voter?.voted) {
+          navigate(`/results/${electionId}`, { replace: true });
+          return;
+        }
         setInvite(data);
       } catch (err) {
         toast.error(err.response?.data?.error || "Invalid invitation");
@@ -38,7 +43,7 @@ export default function InviteVotePage() {
       }
     }
     load();
-  }, [electionId, token]);
+  }, [electionId, token, navigate]);
 
   const election = invite?.election;
   const canVote = election?.status === "voting_open" || election?.status === "scheduled";
@@ -165,7 +170,7 @@ export default function InviteVotePage() {
           <div className="alert alert-info detail-action">
             Save your receipt code. You can use it on the results page to confirm the recorded candidate.
           </div>
-          <a className="btn btn-primary btn-full detail-action" href={`/results/${electionId}`} target="_blank" rel="noreferrer">
+          <a className="btn btn-primary btn-full detail-action" href={`/results/${electionId}`}>
             View and verify election results
           </a>
         </section>
